@@ -1,0 +1,15 @@
+# Ruby AI — Pinned requirements (Python 3.11 or 3.12 required)
+# Python 3.15.0a5 is NOT supported — pydantic-core wheels are incompatible.
+# Install: pip install -r requirements.txt
+
+anyio==4.9.0
+fastapi==0.115.12
+uvicorn==0.34.2
+pydantic==2.11.5
+pydantic-settings==2.9.1
+openai==1.82.0
+python-dotenv==1.1.0
+python-multipart==0.0.20
+httpx==0.28.1
+pytest==8.4.0
+pytest-asyncio==0.26.0
