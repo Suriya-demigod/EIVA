@@ -1,1 +1,1 @@
-# tests package
+"""EIVA integration tests."""

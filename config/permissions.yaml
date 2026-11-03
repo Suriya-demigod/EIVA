@@ -1,0 +1,31 @@
+tools:
+  filesystem.read_file:
+    enabled: true
+    requires_approval: false
+    allowed_roots: ["."]
+  filesystem.list_directory:
+    enabled: true
+    requires_approval: false
+    allowed_roots: ["."]
+  filesystem.write_file:
+    enabled: true
+    requires_approval: true
+    allowed_roots: ["."]
+  github.get_file:
+    enabled: true
+    requires_approval: false
+  github.read_issue:
+    enabled: true
+    requires_approval: false
+  github.create_issue:
+    enabled: true
+    requires_approval: true
+  playwright.navigate:
+    enabled: true
+    requires_approval: true
+  playwright.snapshot:
+    enabled: true
+    requires_approval: false
+  playwright.click:
+    enabled: true
+    requires_approval: true

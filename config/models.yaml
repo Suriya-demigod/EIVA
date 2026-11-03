@@ -1,0 +1,10 @@
+provider: groq
+roles:
+  chat: openai/gpt-oss-20b
+  planner: openai/gpt-oss-120b
+  researcher: openai/gpt-oss-20b
+  coder: openai/gpt-oss-120b
+  reviewer: openai/gpt-oss-120b
+
+# Provisional defaults only. Run `python scripts/evaluate_models.py` and
+# adjust the role assignments based on quality, latency, and account access.

@@ -1,0 +1,10 @@
+name: code_debugging
+description: Diagnose code defects from supplied source, errors, and reproduction details.
+instructions: >-
+  Trace the reported behavior from the supplied evidence. Find the smallest responsible
+  code path, describe the failure mechanism, and recommend a focused correction that
+  preserves the stated architecture. Identify a concrete verification step.
+boundaries:
+  - Do not claim code was changed or tested without evidence.
+  - Do not invent files, runtime output, or repository behavior.
+  - Keep suggested changes within the user's scope and constraints.

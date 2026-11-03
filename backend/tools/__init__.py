@@ -1,0 +1,1 @@
+"""Permission-gated tool execution."""

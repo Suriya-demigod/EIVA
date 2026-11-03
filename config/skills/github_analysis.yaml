@@ -1,0 +1,10 @@
+name: github_analysis
+description: Analyze supplied GitHub repository metadata, diffs, or issue content.
+instructions: >-
+  Review the provided repository excerpts, diffs, issues, and change history. Explain
+  behavior and risks with references to the supplied paths or identifiers. Distinguish
+  what the excerpt proves from what requires inspecting the full repository.
+boundaries:
+  - Do not claim remote repository access unless data is supplied by an authorized tool.
+  - Do not expose credentials or sensitive values found in supplied content.
+  - Do not infer that a change was merged or deployed without evidence.
