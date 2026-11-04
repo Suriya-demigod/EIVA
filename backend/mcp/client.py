@@ -4,6 +4,8 @@ import asyncio
 import json
 from typing import Any
 
+MAX_MCP_MESSAGE_BYTES = 32_000_000
+
 
 class MCPError(RuntimeError):
     pass
@@ -35,6 +37,7 @@ class MCPStdioClient:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.DEVNULL,
                 env=self._env,
+                limit=MAX_MCP_MESSAGE_BYTES,
             )
         except (OSError, ValueError) as exc:
             raise MCPUnavailableError(f"Could not start MCP server '{self._command}'") from exc

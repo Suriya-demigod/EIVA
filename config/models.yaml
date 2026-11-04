@@ -5,6 +5,7 @@ roles:
   researcher: openai/gpt-oss-20b
   coder: openai/gpt-oss-120b
   reviewer: openai/gpt-oss-120b
+  vision: qwen/qwen3.8-27b
 audio:
   transcription_model: whisper-large-v3-turbo
   speech_model: canopylabs/orpheus-v1-english

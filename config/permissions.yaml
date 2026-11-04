@@ -29,3 +29,24 @@ tools:
   playwright.click:
     enabled: true
     requires_approval: true
+  playwright.take_screenshot:
+    enabled: true
+    requires_approval: false
+  playwright.list_tabs:
+    enabled: true
+    requires_approval: false
+  playwright.select_tab:
+    enabled: true
+    requires_approval: true
+  playwright.create_tab:
+    enabled: true
+    requires_approval: true
+  playwright.close_tab:
+    enabled: true
+    requires_approval: true
+  playwright.type_text:
+    enabled: true
+    requires_approval: true
+  playwright.press_key:
+    enabled: true
+    requires_approval: true

@@ -27,7 +27,19 @@ def main() -> None:
         ROOT / "config/mcp_servers.yaml",
         ROOT / "config/permissions.yaml",
     )
-    assert len(gateway.tool_names()) == 9
+    browser_tools = {
+        "playwright.navigate",
+        "playwright.snapshot",
+        "playwright.click",
+        "playwright.take_screenshot",
+        "playwright.list_tabs",
+        "playwright.select_tab",
+        "playwright.create_tab",
+        "playwright.close_tab",
+        "playwright.type_text",
+        "playwright.press_key",
+    }
+    assert browser_tools <= set(gateway.tool_names())
 
     permissions = PermissionManager.from_yaml(ROOT / "config/permissions.yaml")
     permissions.authorize("filesystem.read_file", path=str(ROOT / "README.md"))
@@ -49,7 +61,7 @@ def main() -> None:
     expect_rejection(lambda: PlaywrightNavigate.model_validate({"url": "javascript:alert(1)"}), ValidationError)
     assert any(event.reason == "path_outside_allowed_roots" for event in permissions.audit_events())
     assert len(permissions.audit_events(task_id)) == 1
-    print("tool_bindings=9 read_scope=passed approval_gate=passed schemas=passed task_audit=passed")
+    print(f"tool_bindings={len(gateway.tool_names())} browser_controls=passed read_scope=passed approval_gate=passed schemas=passed task_audit=passed")
 
 
 if __name__ == "__main__":

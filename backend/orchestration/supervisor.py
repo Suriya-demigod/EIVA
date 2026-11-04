@@ -97,4 +97,8 @@ class WorkflowSupervisor:
                     TaskStatus.failed,
                     error=f"Workflow '{workflow}' failed ({type(exc).__name__})",
                 )
+        finally:
+            close_task = getattr(self.tools, "close_task", None)
+            if close_task is not None:
+                await close_task(task_id)
 

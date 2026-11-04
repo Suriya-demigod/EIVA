@@ -35,3 +35,31 @@ tools:
     server: playwright
     mcp_tool: browser_click
     input_model: playwright_click
+  playwright.take_screenshot:
+    server: playwright
+    mcp_tool: browser_take_screenshot
+    input_model: playwright_take_screenshot
+  playwright.list_tabs:
+    server: playwright
+    mcp_tool: browser_tabs
+    input_model: playwright_list_tabs
+  playwright.select_tab:
+    server: playwright
+    mcp_tool: browser_tabs
+    input_model: playwright_select_tab
+  playwright.create_tab:
+    server: playwright
+    mcp_tool: browser_tabs
+    input_model: playwright_create_tab
+  playwright.close_tab:
+    server: playwright
+    mcp_tool: browser_tabs
+    input_model: playwright_close_tab
+  playwright.type_text:
+    server: playwright
+    mcp_tool: browser_type
+    input_model: playwright_type_text
+  playwright.press_key:
+    server: playwright
+    mcp_tool: browser_press_key
+    input_model: playwright_press_key

@@ -124,6 +124,19 @@ class WorkflowGraph:
 
     @staticmethod
     def _bounded_result(result: dict[str, Any]) -> Any:
+        content = result.get("content")
+        if isinstance(content, list) and any(isinstance(item, dict) and item.get("type") == "image" for item in content):
+            safe_content = [
+                {
+                    key: value
+                    for key, value in item.items()
+                    if key not in {"data"}
+                }
+                if isinstance(item, dict) and item.get("type") == "image"
+                else item
+                for item in content
+            ]
+            result = {**result, "content": safe_content, "image_data_omitted_from_task_record": True}
         serialized = json.dumps(result, ensure_ascii=False, default=str)
         if len(serialized) <= MAX_TOOL_RESULT_CHARS:
             return result

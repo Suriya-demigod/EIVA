@@ -56,3 +56,39 @@ class PlaywrightSnapshot(ToolArguments):
 
 class PlaywrightClick(ToolArguments):
     target: str = Field(min_length=1, max_length=2048)
+
+
+class PlaywrightTakeScreenshot(ToolArguments):
+    target: str | None = Field(default=None, max_length=2048)
+    type: Literal["png", "jpeg", "webp"] = "png"
+    full_page: bool = Field(default=False, serialization_alias="fullPage")
+
+
+class PlaywrightListTabs(ToolArguments):
+    action: Literal["list"] = "list"
+
+
+class PlaywrightSelectTab(ToolArguments):
+    action: Literal["select"] = "select"
+    index: int = Field(ge=0)
+
+
+class PlaywrightCreateTab(ToolArguments):
+    action: Literal["new"] = "new"
+    url: str = Field(pattern=r"^https?://", max_length=4096)
+    isolated_context: str | None = Field(default=None, min_length=1, max_length=128, serialization_alias="isolatedContext")
+
+
+class PlaywrightCloseTab(ToolArguments):
+    action: Literal["close"] = "close"
+    index: int | None = Field(default=None, ge=0)
+
+
+class PlaywrightTypeText(ToolArguments):
+    target: str = Field(min_length=1, max_length=2048)
+    text: str = Field(min_length=1, max_length=4_000)
+    submit: bool = False
+
+
+class PlaywrightPressKey(ToolArguments):
+    key: str = Field(min_length=1, max_length=64)

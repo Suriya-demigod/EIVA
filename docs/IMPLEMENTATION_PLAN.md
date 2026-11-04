@@ -109,6 +109,8 @@ Track current status and per-milestone file changes in the [milestone dashboard]
 
 **Complete when:** EIVA can describe supplied images and perform only explicitly permitted computer actions, with a visible action trace and safe stop behavior.
 
+**Current state:** M11 adds bounded JPEG/PNG/WebP question answering through a configurable Groq vision role and task-scoped Playwright MCP controls for browser tabs, screenshots, navigation, clicks, typing, and keys. Browser actions pass through existing schema validation, per-tool permissions, approval hooks, and task audit events. Cancelling a task terminates its task-owned browser MCP process; screenshot image bytes are excluded from task result persistence. The default MCP server configuration remains empty, and the approval checker/UI is not yet wired, so modifying browser actions stay denied until configured. Native Windows application windows and coordinate-level desktop input are outside this Playwright slice; the UI milestone can expose these API controls later.
+
 ### 12. Frontend application
 
 **Build:** Chat panel, Jarvis core/status view, voice waveform, agent monitor, vision panel, memory panel, task monitor, settings, API services, state management, and responsive styling.

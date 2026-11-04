@@ -1,5 +1,6 @@
 """Validate, authorize, execute, and audit configured MCP tool calls."""
 
+import asyncio
 import inspect
 import os
 from pathlib import Path
@@ -20,8 +21,15 @@ from backend.tools.schemas import (
     GitHubGetFile,
     GitHubReadIssue,
     PlaywrightClick,
+    PlaywrightCloseTab,
+    PlaywrightCreateTab,
+    PlaywrightListTabs,
     PlaywrightNavigate,
+    PlaywrightPressKey,
+    PlaywrightSelectTab,
     PlaywrightSnapshot,
+    PlaywrightTakeScreenshot,
+    PlaywrightTypeText,
 )
 
 
@@ -62,6 +70,13 @@ INPUT_MODELS: dict[str, InputModel] = {
     "playwright_navigate": PlaywrightNavigate,
     "playwright_snapshot": PlaywrightSnapshot,
     "playwright_click": PlaywrightClick,
+    "playwright_take_screenshot": PlaywrightTakeScreenshot,
+    "playwright_list_tabs": PlaywrightListTabs,
+    "playwright_select_tab": PlaywrightSelectTab,
+    "playwright_create_tab": PlaywrightCreateTab,
+    "playwright_close_tab": PlaywrightCloseTab,
+    "playwright_type_text": PlaywrightTypeText,
+    "playwright_press_key": PlaywrightPressKey,
 }
 
 
@@ -124,7 +139,11 @@ class ToolGateway:
         if binding is None:
             self._permissions.record(tool_name, "denied", "unknown_tool", task_id, request_id)
             raise PermissionDenied(f"Tool '{tool_name}' is not registered")
+        if binding.server == "playwright" and task_id is None:
+            self._permissions.record(tool_name, "denied", "task_scope_required", task_id, request_id)
+            raise PermissionDenied("Browser tools require an active task scope")
         client: MCPStdioClient | None = None
+        client_key = binding.server
         try:
             model = INPUT_MODELS[binding.input_model]
             validated = model.model_validate(arguments)
@@ -147,31 +166,46 @@ class ToolGateway:
             server = self._servers.get(binding.server)
             if server is None:
                 raise MCPUnavailableError(f"MCP server '{binding.server}' is not configured")
-            client = self._clients.get(binding.server)
+            if binding.server == "playwright" and task_id is not None:
+                client_key = f"playwright:{task_id}"
+            client = self._clients.get(client_key)
             if client is None:
                 env = os.environ.copy()
                 env.update({key: os.path.expandvars(value) for key, value in server.env.items()})
                 client = MCPStdioClient(server.command, server.args, env)
-                self._clients[binding.server] = client
-            result = await client.call_tool(binding.mcp_tool, validated.model_dump(exclude_none=True))
+                self._clients[client_key] = client
+            result = await client.call_tool(binding.mcp_tool, validated.model_dump(exclude_none=True, by_alias=True))
             if result.get("isError"):
                 raise RuntimeError("MCP server reported a tool error")
             self._permissions.record(tool_name, "allowed", "mcp_call_completed", task_id, request_id)
             return result
         except PermissionDenied:
             raise
+        except asyncio.CancelledError:
+            if client is not None:
+                self._clients.pop(client_key, None)
+                await asyncio.shield(client.close())
+            self._permissions.record(tool_name, "cancelled", "task_cancelled", task_id, request_id)
+            raise
         except ValidationError as exc:
             self._permissions.record(tool_name, "rejected", "invalid_arguments", task_id, request_id)
             raise ToolInputError(f"Invalid arguments for '{tool_name}'") from exc
         except Exception as exc:
             if client is not None:
-                self._clients.pop(binding.server, None)
+                self._clients.pop(client_key, None)
                 await client.close()
             self._permissions.record(tool_name, "failed", type(exc).__name__, task_id, request_id)
             raise ToolExecutionFailure(tool_name, type(exc).__name__) from exc
 
     def audit_events(self, task_id: UUID | None = None):
         return self._permissions.audit_events(task_id)
+
+    async def close_task(self, task_id: UUID) -> None:
+        """Close browser MCP processes owned by one completed or cancelled task."""
+        key = f"playwright:{task_id}"
+        client = self._clients.pop(key, None)
+        if client is not None:
+            await client.close()
 
     async def close(self) -> None:
         clients, self._clients = list(self._clients.values()), {}

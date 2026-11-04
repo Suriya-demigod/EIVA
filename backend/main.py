@@ -14,7 +14,7 @@ from backend.api.errors import (
     unexpected_error_handler,
     validation_error_handler,
 )
-from backend.api.routes import agents, chat, knowledge, memories, tasks, voice
+from backend.api.routes import agents, chat, knowledge, memories, tasks, vision, voice
 from backend.config import get_settings
 from backend.lifecycle import app_lifespan
 from backend.observability.logging import configure_logging
@@ -30,6 +30,7 @@ app.include_router(tasks.router, prefix=settings.api_prefix)
 app.include_router(memories.router, prefix=settings.api_prefix)
 app.include_router(knowledge.router, prefix=settings.api_prefix)
 app.include_router(voice.router, prefix=settings.api_prefix)
+app.include_router(vision.router, prefix=settings.api_prefix)
 app.mount("/voice-ui", StaticFiles(directory="frontend", html=True), name="voice-ui")
 
 

@@ -175,3 +175,14 @@ class KnowledgeAnswerResponse(APIModel):
     answer: str
     model: str | None = None
     citations: list[KnowledgeCitation]
+
+
+class VisionAnalyzeResponse(APIModel):
+    answer: str
+    model: str
+    request_id: UUID
+
+
+class VisionScreenRequest(APIModel):
+    task_id: UUID
+    question: str = Field(min_length=1, max_length=4_000)

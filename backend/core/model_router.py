@@ -7,6 +7,7 @@ from pathlib import Path
 import time
 from typing import Any
 from uuid import UUID
+import base64
 
 import yaml
 from groq import AsyncGroq, GroqError
@@ -31,7 +32,7 @@ class ModelRouter:
     async def complete(
         self,
         role: str,
-        messages: list[dict[str, str]],
+        messages: list[dict[str, Any]],
         **options: Any,
     ) -> Any:
         model = self.model_for(role)
@@ -81,6 +82,37 @@ class ModelRouter:
             ),
         )
         return response
+
+    async def analyze_image(
+        self,
+        question: str,
+        image_bytes: bytes,
+        mime_type: str,
+        request_id: UUID | None = None,
+    ) -> tuple[str, str]:
+        """Answer a question about one user-supplied image using the configured vision role."""
+        model = self.model_for("vision")
+        encoded = base64.b64encode(image_bytes).decode("ascii")
+        completion = await self.complete(
+            "vision",
+            [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": question},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:{mime_type};base64,{encoded}"},
+                        },
+                    ],
+                }
+            ],
+            request_id=request_id,
+            max_completion_tokens=1024,
+            temperature=0.2,
+        )
+        answer = completion.choices[0].message.content or ""
+        return answer, completion.model or model
 
     async def transcribe(
         self,
