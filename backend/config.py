@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     rag_embedding_cache_dir: str = "data/models"
     rag_retrieval_top_k: int = Field(default=6, ge=5, le=8)
     rag_candidate_k: int = Field(default=30, ge=8, le=100)
+    voice_enabled: bool = False
+    voice_max_audio_bytes: int = Field(default=25_000_000, ge=1_024, le=100_000_000)
 
     @model_validator(mode="after")
     def validate_rag_chunk_overlap(self) -> "Settings":

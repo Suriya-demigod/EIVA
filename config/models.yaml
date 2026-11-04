@@ -5,6 +5,10 @@ roles:
   researcher: openai/gpt-oss-20b
   coder: openai/gpt-oss-120b
   reviewer: openai/gpt-oss-120b
+audio:
+  transcription_model: whisper-large-v3-turbo
+  speech_model: canopylabs/orpheus-v1-english
+  speech_voice: hannah
 
 # Provisional defaults only. Run `python scripts/evaluate_models.py` and
 # adjust the role assignments based on quality, latency, and account access.

@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 import time
 from typing import Any
+from uuid import UUID
 
 import yaml
 from groq import AsyncGroq, GroqError
@@ -16,9 +17,10 @@ logger = logging.getLogger("eiva.models")
 
 
 class ModelRouter:
-    def __init__(self, client: AsyncGroq, models: dict[str, str]) -> None:
+    def __init__(self, client: AsyncGroq, models: dict[str, str], audio: dict[str, str] | None = None) -> None:
         self._client = client
         self._models = models
+        self._audio = audio or {}
 
     def model_for(self, role: str) -> str:
         try:
@@ -80,6 +82,92 @@ class ModelRouter:
         )
         return response
 
+    async def transcribe(
+        self,
+        audio_bytes: bytes,
+        filename: str,
+        content_type: str,
+        language: str | None = None,
+        request_id: UUID | None = None,
+    ) -> str:
+        """Transcribe user supplied audio through the existing Groq client."""
+        model = self._audio.get("transcription_model")
+        if not model:
+            raise ValueError("No voice transcription model configured")
+        started = time.perf_counter()
+        options: dict[str, Any] = {
+            "file": (filename, audio_bytes, content_type),
+            "model": model,
+            "response_format": "json",
+            "temperature": 0.0,
+        }
+        if language:
+            options["language"] = language
+        try:
+            response = await self._client.audio.transcriptions.create(**options)
+        except GroqError as exc:
+            logger.warning(
+                "EIVA_AUDIO_CALL %s",
+                json.dumps(
+                    {"event": "failed", "operation": "transcription", "model": model,
+                     "request_id": str(request_id) if request_id else None,
+                     "latency_ms": round((time.perf_counter() - started) * 1000),
+                     "error_type": type(exc).__name__},
+                    sort_keys=True,
+                ),
+            )
+            raise
+        logger.info(
+            "EIVA_AUDIO_CALL %s",
+            json.dumps(
+                {"event": "completed", "operation": "transcription", "model": model,
+                 "request_id": str(request_id) if request_id else None,
+                 "latency_ms": round((time.perf_counter() - started) * 1000),
+                 "audio_bytes": len(audio_bytes)},
+                sort_keys=True,
+            ),
+        )
+        return response.text.strip()
+
+    async def synthesize(self, text: str, request_id: UUID | None = None) -> bytes:
+        """Generate WAV speech through the existing Groq client."""
+        model = self._audio.get("speech_model")
+        voice = self._audio.get("speech_voice")
+        if not model or not voice:
+            raise ValueError("No voice speech model and voice are configured")
+        started = time.perf_counter()
+        try:
+            response = await self._client.audio.speech.create(
+                model=model,
+                voice=voice,
+                input=text,
+                response_format="wav",
+            )
+            audio_bytes = await response.aread()
+        except GroqError as exc:
+            logger.warning(
+                "EIVA_AUDIO_CALL %s",
+                json.dumps(
+                    {"event": "failed", "operation": "speech", "model": model,
+                     "request_id": str(request_id) if request_id else None,
+                     "latency_ms": round((time.perf_counter() - started) * 1000),
+                     "error_type": type(exc).__name__},
+                    sort_keys=True,
+                ),
+            )
+            raise
+        logger.info(
+            "EIVA_AUDIO_CALL %s",
+            json.dumps(
+                {"event": "completed", "operation": "speech", "model": model,
+                 "request_id": str(request_id) if request_id else None,
+                 "latency_ms": round((time.perf_counter() - started) * 1000),
+                 "output_bytes": len(audio_bytes)},
+                sort_keys=True,
+            ),
+        )
+        return audio_bytes
+
     async def aclose(self) -> None:
         await self._client.close()
 
@@ -99,7 +187,7 @@ def get_model_router() -> ModelRouter:
         timeout=settings.groq_timeout_seconds,
         max_retries=settings.groq_max_retries,
     )
-    return ModelRouter(client, models)
+    return ModelRouter(client, models, config.get("audio", {}))
 
 
 async def close_model_router() -> None:

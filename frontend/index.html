@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#10151d" />
+    <title>EIVA Voice</title>
+    <link rel="stylesheet" href="/voice-ui/voice.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <p class="eyebrow">EIVA · VOICE</p>
+        <h1>Talk to EIVA</h1>
+        <p class="intro">Start the microphone when you are ready. EIVA stops listening after a pause.</p>
+      </header>
+
+      <section class="controls" aria-label="Voice controls">
+        <button id="listen" class="primary" type="button" disabled>Checking voice…</button>
+        <button id="stop" type="button" disabled>Stop / cancel</button>
+      </section>
+      <p id="status" class="status" role="status" aria-live="polite">Checking voice settings…</p>
+
+      <section class="transcript panel" aria-labelledby="heard-title">
+        <h2 id="heard-title">You said</h2>
+        <p id="heard" class="copy muted">Your transcript will appear here.</p>
+      </section>
+      <section class="response panel" aria-labelledby="answer-title">
+        <h2 id="answer-title">EIVA</h2>
+        <p id="answer" class="copy muted">EIVA’s answer will appear here.</p>
+      </section>
+      <p class="privacy">Audio is sent to Groq for transcription when you submit a recording. The microphone is only active while listening.</p>
+    </main>
+    <script src="/voice-ui/voice.js" defer></script>
+  </body>
+</html>

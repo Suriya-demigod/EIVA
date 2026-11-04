@@ -4,7 +4,7 @@
 
 | Project status | Next milestone | Model provider | Integrations in scope |
 |---|---|---|---|
-| ✅ M00–M09 complete | **M10 — Waiting for user instruction** | Groq only | Filesystem · GitHub · Playwright |
+| ✅ M00–M10 complete | **M11 — Waiting for user instruction** | Groq only | Filesystem · GitHub · Playwright |
 
 CST and antenna-project integrations are out of scope.
 
@@ -41,9 +41,9 @@ flowchart LR
     classDef done fill:#d9f5e5,stroke:#27804b,color:#123a23,stroke-width:2px;
     classDef waiting fill:#fff1c2,stroke:#c68a00,color:#382600,stroke-width:2px;
     classDef queued fill:#eef2f7,stroke:#8793a1,color:#1e293b;
-    class M00,M01,M02,M03,M04,M05,M06,M07,M08,M09 done;
-    class M10 waiting;
-    class M11,M12,M13,M14,M15 queued;
+    class M00,M01,M02,M03,M04,M05,M06,M07,M08,M09,M10 done;
+    class M11 waiting;
+    class M12,M13,M14,M15 queued;
 ```
 
 ## Milestones and file-change records
@@ -62,8 +62,8 @@ Each checkpoint records the exact files changed for that milestone. File lists a
 | 07 | Task manager, event bus, and orchestration | ✅ Complete | [M07](docs/checkpoints/M07-task-manager-event-bus-and-orchestration.md) |
 | 08 | Persistent storage and memory | ✅ Complete | [M08](docs/checkpoints/M08-persistent-storage-and-memory.md) |
 | 09 | Document and code RAG | ✅ Complete | [M09](docs/checkpoints/M09-document-and-code-rag.md) |
-| 10 | Voice interface | ⏸ Waiting for user instruction | [M10](docs/checkpoints/M10-voice-interface.md) |
-| 11 | Vision and desktop/browser control | ⬜ Queued | [M11](docs/checkpoints/M11-vision-and-desktop-browser-control.md) |
+| 10 | Voice interface | ✅ Complete | [M10](docs/checkpoints/M10-voice-interface.md) |
+| 11 | Vision and desktop/browser control | ⏸ Waiting for user instruction | [M11](docs/checkpoints/M11-vision-and-desktop-browser-control.md) |
 | 12 | Frontend application | ⬜ Queued | [M12](docs/checkpoints/M12-frontend-application.md) |
 | 13 | External agent communication | ⬜ Queued | [M13](docs/checkpoints/M13-external-agent-communication.md) |
 | 14 | Observability, evaluation, and security hardening | ⬜ Queued | [M14](docs/checkpoints/M14-observability-evaluation-and-security-hardening.md) |

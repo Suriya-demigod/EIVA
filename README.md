@@ -18,3 +18,11 @@ The local embedding model is configurable with `RAG_EMBEDDING_MODEL` and default
 - `POST /api/v1/knowledge/answer` returns a Groq answer grounded in retrieved excerpts and labeled citations.
 
 Retrieval combines a local `sqlite-vec` dense-vector search with SQLite FTS5 keyword search using Reciprocal Rank Fusion. The answer endpoint sends only the top retrieved excerpts, with source labels and metadata, to the existing Groq model router. PDF citations include page numbers; text and code include line ranges; DOCX includes paragraph ranges and headings.
+
+## Voice interface
+
+The optional voice page is available at `/voice-ui/`. Voice is disabled by default; set `EIVA_VOICE_ENABLED=true` in your private `.env` and restart the API. The page requests microphone access only after the user selects **Start speaking**, detects a pause to submit the recording, and provides a **Stop / cancel** control for recording and playback.
+
+Audio transcription and speech use Groq's audio endpoints through the same `AsyncGroq` client owned by EIVA's model router. The page sends the recording to Groq for transcription, submits the resulting text through the existing chat route, then requests WAV speech for the response. Audio and transcript content are not written to the EIVA database or logs. Use the voice controls only when you are comfortable sending the recording and spoken response text to Groq; provider account usage and charges apply.
+
+Voice models and the default English voice are configured under `audio` in `config/models.yaml`. The browser splits generated responses into the current TTS endpoint's 200-character input limit. Microphone access requires a secure browser context (localhost or HTTPS). Optional wake-word detection is not enabled in this first version.

@@ -101,6 +101,8 @@ Track current status and per-milestone file changes in the [milestone dashboard]
 
 **Complete when:** A user can speak a request, see/hear the response, interrupt or stop playback, and control microphone use clearly.
 
+**Current state:** M10 provides a browser voice page with explicit microphone activation, silence-based submission, and stop/cancel controls. Audio transcription and WAV speech use the existing Groq model-router client; the transcript goes through the existing chat route and durable conversation history. Voice is disabled by default, audio input size and accepted types are bounded, and audio/transcript content is not logged or stored. The current endpoint accepts short speech synthesis requests (200 characters), so the page splits longer answers. Physical microphone/speaker behavior still needs a manual browser check on the target device; wake-word support remains optional and is deferred.
+
 ### 11. Vision and desktop/browser control
 
 **Build:** Image input and vision analysis; screen capture; window discovery; mouse/keyboard action layer; browser session management; task-scoped computer-control permissions.
