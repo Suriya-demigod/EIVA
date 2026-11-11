@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     context_max_conversations: int = Field(default=512, ge=1, le=10000)
     models_config_path: str = "config/models.yaml"
     agents_config_path: str = "config/agents.yaml"
-    skills_config_dir: str = "config/skills"
+    skills_config_dir: str = "backend/skills/available"
     tool_bindings_config_path: str = "config/tool_bindings.yaml"
     mcp_servers_config_path: str = "config/mcp_servers.yaml"
     permissions_config_path: str = "config/permissions.yaml"

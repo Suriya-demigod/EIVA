@@ -143,6 +143,14 @@ Track current status and per-milestone file changes in the [milestone dashboard]
 
 **Current state:** Complete for the documented Windows local-development deployment. A PowerShell setup script creates `.venv` and installs the declared Python dependencies; configuration and operations guides cover settings, start/upgrade, migrations, and SQLite backup/restore. A release-check script runs the local regression and module evaluations. Startup and health were exercised locally. This is not a production or multi-user deployment profile; dependency vulnerability scanning remains conditional on installing `pip-audit`.
 
+### 16. Project structure alignment and cleanup — complete
+
+**Build:** Place the running web application under `frontend/src/`, place validated skill manifests under `backend/skills/available/`, update all runtime and evaluation references, and remove empty React/package scaffolding that is not used by EIVA.
+
+**Complete when:** FastAPI serves the relocated frontend, voice and chat assets load from their new locations, agent skills load from the backend package, and the release checks pass without changing the native-module frontend architecture or MCP configuration model.
+
+**Current state:** Complete. The active workspace and voice UI now live under `frontend/src/`; skills are stored under `backend/skills/available/`. Empty React placeholders and the unused zero-byte `package.json` were removed. MCP server commands remain external and are configured through `config/mcp_servers.yaml`.
+
 ## How we will evaluate EIVA
 
 1. **Model screening:** Compare candidate Groq models on the same planning, coding, review, tool-selection, and response-quality cases. Record outputs, pass criteria, latency, and usage. Review failures manually before changing role mappings.

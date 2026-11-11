@@ -94,7 +94,7 @@ class EvaluationTools:
 
 
 def build_agents(tracker: AgentTracker) -> AgentRegistry:
-    skills = SkillRegistry.from_directory(ROOT / "config/skills")
+    skills = SkillRegistry.from_directory(ROOT / "backend/skills/available")
     registry = AgentRegistry.from_yaml(ROOT / "config/agents.yaml", skills)
     for definition, _ in registry.definitions():
         registry.register(EvaluationAgent(definition, tracker))
@@ -210,7 +210,7 @@ async def check_agent_runtime_and_skill_prompts():
         raise AssertionError("Agent timeout was not enforced")
     assert [event.kind for event in timeout_events] == ["started", "failed"]
 
-    skills = SkillRegistry.from_directory(ROOT / "config/skills")
+    skills = SkillRegistry.from_directory(ROOT / "backend/skills/available")
     definition = next(item for item, _ in AgentRegistry.from_yaml(ROOT / "config/agents.yaml", skills).definitions() if item.name == "researcher")
 
     class FakeRouter:

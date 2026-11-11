@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { streamChat } from "../frontend/app/api.mjs";
+import { streamChat } from "../frontend/src/api.mjs";
 
 test("streamChat handles split SSE frames and reports the conversation", async () => {
   const encoder = new TextEncoder();

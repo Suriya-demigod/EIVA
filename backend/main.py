@@ -34,8 +34,8 @@ app.include_router(knowledge.router, prefix=settings.api_prefix)
 app.include_router(voice.router, prefix=settings.api_prefix)
 app.include_router(vision.router, prefix=settings.api_prefix)
 app.include_router(a2a.router)
-_frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
-app.mount("/voice-ui", StaticFiles(directory=str(_frontend_dir / "voice"), html=True), name="voice-ui")
+_frontend_src_dir = Path(__file__).resolve().parent.parent / "frontend" / "src"
+app.mount("/voice-ui", StaticFiles(directory=str(_frontend_src_dir / "voice"), html=True), name="voice-ui")
 
 
 @app.middleware("http")
@@ -62,4 +62,4 @@ async def health() -> dict[str, str]:
     return {"status": "ok", "service": settings.app_name}
 
 
-app.mount("/", StaticFiles(directory=str(_frontend_dir / "app"), html=True), name="frontend")
+app.mount("/", StaticFiles(directory=str(_frontend_src_dir), html=True), name="frontend")

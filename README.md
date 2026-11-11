@@ -32,6 +32,16 @@ Run EIVA with `uvicorn backend.main:app --reload` and open `http://127.0.0.1:800
 
 The web app is served directly by FastAPI and uses native browser modules; it has no separate JavaScript build or package dependencies. Voice stays off unless `VOICE_ENABLED=true` is set. Consequential tool calls pause in the local approval queue and only continue after an explicit decision. Pending approvals are in memory and are cancelled when the app shuts down.
 
+## Project structure
+
+- `backend/` — API, model routing, agents, orchestration, tools, MCP client, memory, database, RAG, and skills.
+- `backend/skills/available/` — validated YAML skill manifests loaded by the agent registry.
+- `frontend/src/` — the FastAPI-served native-module workspace and `frontend/src/voice/` voice studio.
+- `config/` — model, agent, permission, tool-binding, and optional external MCP server configuration.
+- `data/` — local SQLite database, model cache, and knowledge documents; runtime data is excluded from Git.
+
+The UI intentionally uses native JavaScript modules rather than React. There is no frontend package manifest or build step. MCP server implementations are installed/configured separately; EIVA connects through its shared client and `config/mcp_servers.yaml`.
+
 ## Agent-to-agent communication
 
 Internal agents can publish validated messages through their task-scoped `AgentContext`. External A2A support is disabled unless `A2A_ENABLED=true` and a bearer token of at least 32 characters is set in `.env` as `A2A_SERVER_TOKEN`. Set `A2A_PUBLIC_URL` to the externally reachable HTTPS `/a2a/v1` endpoint before exposing the server.

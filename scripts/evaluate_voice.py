@@ -176,8 +176,8 @@ async def evaluate_shared_router() -> None:
 async def main() -> None:
     await evaluate_shared_router()
     await evaluate_routes()
-    page = (Path(__file__).resolve().parents[1] / "frontend" / "voice" / "index.html").read_text(encoding="utf-8")
-    script = (Path(__file__).resolve().parents[1] / "frontend" / "voice" / "voice.js").read_text(encoding="utf-8")
+    page = (Path(__file__).resolve().parents[1] / "frontend" / "src" / "voice" / "index.html").read_text(encoding="utf-8")
+    script = (Path(__file__).resolve().parents[1] / "frontend" / "src" / "voice" / "voice.js").read_text(encoding="utf-8")
     assert 'id="listen"' in page and 'id="stop"' in page and "voice.js?v=tts-async-response-fix-1" in page
     assert "getUserMedia" in script and "requestAnimationFrame" in script and "activeAudio.pause()" in script
     assert "activeAudio.play()" in script

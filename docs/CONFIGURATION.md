@@ -21,7 +21,7 @@ Create `.env` locally, add `GROQ_API_KEY=<your key>` in a text editor, and save 
 | `GROQ_MAX_RETRIES` | `2` | Groq client retry count; allowed range 0–5. |
 | `MODELS_CONFIG_PATH` | `config/models.yaml` | Groq role and audio model mapping, plus optional token rates. |
 | `AGENTS_CONFIG_PATH` | `config/agents.yaml` | Agent definitions and skill assignments. |
-| `SKILLS_CONFIG_DIR` | `config/skills` | Directory containing skill manifests. |
+| `SKILLS_CONFIG_DIR` | `backend/skills/available` | Directory containing skill manifests. |
 | `TOOL_BINDINGS_CONFIG_PATH` | `config/tool_bindings.yaml` | EIVA-to-MCP tool mapping. |
 | `MCP_SERVERS_CONFIG_PATH` | `config/mcp_servers.yaml` | MCP server commands. |
 | `PERMISSIONS_CONFIG_PATH` | `config/permissions.yaml` | Tool permissions and workspace roots. |
@@ -77,7 +77,7 @@ For outbound A2A, put each peer credential in the process environment or the pri
 |---|---|
 | `config/models.yaml` | Groq role mappings, audio models, optional cost rates. |
 | `config/agents.yaml` | Agent registry and workflow role configuration. |
-| `config/skills/` | Validated skill manifests and prompt instructions. |
+| `backend/skills/available/` | Validated skill manifests and prompt instructions. |
 | `config/mcp_servers.yaml` | Local MCP server commands; empty by default. |
 | `config/tool_bindings.yaml` | EIVA tool names and MCP tool mappings. |
 | `config/permissions.yaml` | Tool availability, workspace roots, and approval requirements. |
