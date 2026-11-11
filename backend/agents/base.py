@@ -7,6 +7,7 @@ from typing import Any, Awaitable, Callable, Literal
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
+from backend.agents.messaging import AgentMessage, AgentMessageBus
 
 
 class AgentModel(BaseModel):
@@ -54,12 +55,16 @@ class AgentContext:
         agent_name: str,
         cancellation_event: asyncio.Event,
         report_progress: Callable[[str, int | None], Awaitable[None]],
+        message_bus: AgentMessageBus | None = None,
+        known_agents: set[str] | None = None,
     ) -> None:
         self.task_id = task_id
         self.request_id = request_id
         self.agent_name = agent_name
         self._cancellation_event = cancellation_event
         self._report_progress = report_progress
+        self._message_bus = message_bus
+        self._known_agents = known_agents or set()
 
     @property
     def cancellation_requested(self) -> bool:
@@ -72,6 +77,30 @@ class AgentContext:
     async def report_progress(self, message: str, progress_percent: int | None = None) -> None:
         self.raise_if_cancelled()
         await self._report_progress(message, progress_percent)
+
+    async def send_message(self, recipient: str, content: str) -> AgentMessage:
+        """Send a typed internal request to another configured agent in this task."""
+        self.raise_if_cancelled()
+        if recipient not in self._known_agents:
+            raise ValueError("Recipient is not a configured EIVA agent")
+        if self._message_bus is None:
+            raise RuntimeError("Internal agent messaging is unavailable")
+        return self._message_bus.publish(
+            AgentMessage(
+                task_id=self.task_id,
+                request_id=self.request_id,
+                sender=self.agent_name,
+                recipient=recipient,
+                kind="request",
+                content=content,
+            )
+        )
+
+    def messages_for_agent(self) -> list[AgentMessage]:
+        """Return only task-scoped messages addressed to this agent."""
+        if self._message_bus is None:
+            return []
+        return [message for message in self._message_bus.history(self.task_id) if message.recipient == self.agent_name]
 
 
 class BaseAgent(ABC):

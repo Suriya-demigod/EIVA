@@ -10,6 +10,14 @@ Run EIVA with `uvicorn backend.main:app --reload` and open `http://127.0.0.1:800
 
 The web app is served directly by FastAPI and uses native browser modules; it has no separate JavaScript build or package dependencies. Voice stays off unless `EIVA_VOICE_ENABLED=true` is set. Consequential tool calls pause in the local approval queue and only continue after an explicit decision. Pending approvals are in memory and are cancelled when the app shuts down.
 
+## Agent-to-agent communication
+
+Internal agents can publish validated messages through their task-scoped `AgentContext`. External A2A support is disabled unless `EIVA_A2A_ENABLED=true` and a bearer token of at least 32 characters is set in `.env` as `EIVA_A2A_SERVER_TOKEN`. Set `EIVA_A2A_PUBLIC_URL` to the externally reachable HTTPS `/a2a/v1` endpoint before exposing the server.
+
+The server publishes `/.well-known/agent-card.json`, accepts authenticated A2A 1.0 HTTP+JSON `POST /a2a/v1/message:send`, and exposes authenticated task status at `/a2a/v1/tasks/{task_id}`. A received text request starts a local research task. To contact a remote peer, add its Agent Card URL and an environment-variable name in `config/a2a_peers.yaml`, then call `POST /api/v1/agent-messages` with an existing `task_id`, the configured peer name, and the text to send. Peer credentials are resolved from the process environment or `.env`; credentials and message text are excluded from task trace events.
+
+The initial A2A slice supports bounded text messages, bearer authentication, and task polling. Streaming, push notifications, attachments, and follow-up messages are not implemented. Peer endpoints must use HTTPS and share the configured Agent Card's origin; HTTP is accepted only for loopback development. See the [A2A Protocol Specification](https://github.com/a2aproject/A2A/blob/main/docs/specification.md).
+
 Conversation history, tasks, workflow checkpoints, and explicitly saved memories use a local SQLite database at `data/eiva.sqlite3` by default. Migrations run at application startup; they can also be applied with `python -m scripts.migrate_db`. Database files are excluded from Git.
 
 ## Local knowledge base

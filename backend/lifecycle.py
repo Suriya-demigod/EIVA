@@ -18,6 +18,8 @@ from backend.rag.embeddings import LocalEmbedder
 from backend.rag.repository import RagRepository
 from backend.rag.service import RagService
 from backend.agents.registry import get_agent_registry
+from backend.agents.a2a import A2AClient
+from backend.agents.messaging import AgentMessageBus
 from backend.orchestration.events import TaskEventBus
 from backend.orchestration.supervisor import WorkflowSupervisor
 from backend.tasks.manager import TaskManager
@@ -37,6 +39,10 @@ async def app_lifespan(app: FastAPI) -> AsyncIterator[None]:
     task_repository = TaskRepository(database)
     app.state.task_repository = task_repository
     app.state.event_bus = TaskEventBus(persist_event=task_repository.save_event)
+    app.state.agent_message_bus = AgentMessageBus()
+    app.state.a2a_client = A2AClient.from_yaml(
+        Path(settings.a2a_peers_config_path), timeout_seconds=settings.groq_timeout_seconds
+    )
     app.state.approval_manager = ApprovalManager()
     app.state.tool_gateway = ToolGateway.from_files(
         bindings_path=Path(settings.tool_bindings_config_path),
@@ -71,10 +77,12 @@ async def app_lifespan(app: FastAPI) -> AsyncIterator[None]:
         candidate_k=settings.rag_candidate_k,
         top_k=settings.rag_retrieval_top_k,
     )
+    agent_registry = get_agent_registry()
+    agent_registry.message_bus = app.state.agent_message_bus
     app.state.supervisor = WorkflowSupervisor(
         app.state.task_manager,
         app.state.event_bus,
-        get_agent_registry(),
+        agent_registry,
         app.state.tool_gateway,
         max_concurrent=4,
     )
@@ -84,4 +92,5 @@ async def app_lifespan(app: FastAPI) -> AsyncIterator[None]:
         await app.state.task_manager.shutdown()
         app.state.approval_manager.cancel_all()
         await app.state.tool_gateway.close()
+        await app.state.a2a_client.close()
         await close_model_router()

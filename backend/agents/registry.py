@@ -19,6 +19,7 @@ from backend.agents.base import (
     AgentOutput,
     BaseAgent,
 )
+from backend.agents.messaging import AgentMessageBus
 from backend.agents.browser import BrowserAgent
 from backend.agents.developer import DeveloperAgent
 from backend.agents.researcher import ResearcherAgent
@@ -49,12 +50,13 @@ class AgentInvocation:
 
 
 class AgentRegistry:
-    def __init__(self, definitions: list[AgentDefinition]) -> None:
+    def __init__(self, definitions: list[AgentDefinition], message_bus: AgentMessageBus | None = None) -> None:
         self._definitions = {definition.name: definition for definition in definitions}
         if len(self._definitions) != len(definitions):
             raise ValueError("Agent configuration contains duplicate names")
         self._agents: dict[str, BaseAgent] = {}
         self._active: dict[UUID, tuple[asyncio.Task[AgentOutput] | None, asyncio.Event, str]] = {}
+        self.message_bus = message_bus
 
     @classmethod
     def from_yaml(cls, path: Path, skill_registry: SkillRegistry | None = None) -> "AgentRegistry":
@@ -129,6 +131,8 @@ class AgentRegistry:
             agent_name=name,
             cancellation_event=cancellation_event,
             report_progress=report_progress,
+            message_bus=self.message_bus,
+            known_agents=set(self._definitions),
         )
         self._active[task_id] = (None, cancellation_event, name)
         execution: asyncio.Task[AgentOutput] | None = None

@@ -119,11 +119,13 @@ Track current status and per-milestone file changes in the [milestone dashboard]
 
 **Current state:** Complete. FastAPI serves the native-module web app at `/` and retains the voice studio at `/voice-ui/`. The responsive workspace includes streamed chat, task creation/progress/cancellation, agent status, approval decisions, local knowledge indexing and cited answers, memory create/search/delete, supplied-image analysis, and runtime status. The approval manager is connected to the tool gateway and task event bus; approval summaries omit file contents and typed page text. Browser viewport checks and deterministic UI/API evaluations pass. Live Groq calls and a configured Playwright MCP server were not required for the evaluation.
 
-### 13. External agent communication
+### 13. External agent communication — complete
 
 **Build:** Internal message types and bus first; then optional A2A server/client and agent card for explicitly configured external agents.
 
 **Complete when:** Messages are authenticated, scoped, validated, traceable, and disabled unless configured. Local EIVA operation must not depend on external agents.
+
+**Current state:** Complete for the text-only A2A slice. Internal messages are typed, bounded, and task-scoped, and configured agents can send and inspect messages addressed to them through `AgentContext`. Optional A2A 1.0 HTTP+JSON support publishes an Agent Card, requires a configured bearer token on inbound messages and task polling, and allows outbound requests only to explicitly configured HTTPS peers with bearer credentials. Task events record peer/message IDs and outcomes without message contents or credentials. Tests cover disabled operation, authentication, schema rejection, scope, task traces, peer configuration, remote failures, and the A2A response contract. Streaming, push notifications, attachments, and follow-up messages remain deferred.
 
 ### 14. Observability, evaluation, and security hardening
 
