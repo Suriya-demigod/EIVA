@@ -12,6 +12,8 @@ Setup scripts, local run commands, optional container configuration, configurati
 - `docs/CONFIGURATION.md` — environment variable and YAML configuration reference
 - `docs/OPERATIONS.md` — start, upgrade, migration, SQLite backup/restore, release checks, and deployment limits
 - `docs/checkpoints/M10-voice-interface.md` — historical variable-name correction linking to the current configuration reference
+- `frontend/voice/voice.js` — voice-disabled guidance corrected to the actual `VOICE_ENABLED` setting
+- `scripts/evaluate_voice.py` — regression assertion for the voice setting name
 - `scripts/setup.ps1` — Python/virtual-environment setup and dependency installation
 - `scripts/release_check.ps1` — repeatable local release gate
 - `scripts/backup_database.py` — consistent SQLite online backup with integrity validation
@@ -26,12 +28,17 @@ Setup scripts, local run commands, optional container configuration, configurati
 | Check | Result |
 |---|---|
 | `scripts/setup.ps1` | ✅ Created/validated the workspace venv and installed dependencies; all declared requirements were already satisfied in this environment |
-| `scripts/release_check.ps1` | ✅ 19 Python tests, tool/orchestration/runtime/persistence/RAG evaluations, compilation, dependency consistency, and 2 Node frontend tests passed |
+| `scripts/release_check.ps1` | ✅ 19 Python tests, tool/orchestration/runtime/persistence/RAG/voice evaluations, compilation, dependency consistency, and 2 Node frontend tests passed |
 | `tests/test_database_backup.py` | ✅ 2 tests passed, including a WAL-backed consistent snapshot, integrity validation, and refusal to overwrite an existing backup |
 | Local startup on `127.0.0.1:18765` | ✅ FastAPI startup completed; `/health` returned `ok`; frontend `/` returned HTTP 200 |
 | `git diff --check` | ✅ Passed |
 
-The setup command and complete release script were run. Dependencies were already present in the existing project virtual environment, so a separate empty-environment package download was not performed. The runtime check did not call Groq or external integrations.
+The setup command and complete release script were run. Dependencies were already present in the existing project virtual environment, so a separate empty-environment package download was not performed. The release-check suite uses local mocks and does not call external integrations; the single minimal live Groq diagnostic is recorded below.
+
+## Follow-up diagnostics from the user screenshots
+
+- The voice page's disabled-state hint had retained the incorrect `EIVA_VOICE_ENABLED` name. It now directs users to `VOICE_ENABLED=true`, and the voice evaluation checks that the displayed setting matches the backend.
+- One minimal request through the existing Groq model router failed as `APIConnectionError` (no HTTP status). DNS resolved `api.groq.com`, but the local HTTPS connectivity probe to port 443 failed. This points to blocked/unavailable outbound network connectivity; the API key was not printed or inspected. Restore outbound HTTPS access to `api.groq.com` and retry chat. Voice remains disabled until `VOICE_ENABLED=true` is added to `.env` and the application is restarted.
 
 ## Completion checks
 

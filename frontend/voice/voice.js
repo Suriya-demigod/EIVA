@@ -211,7 +211,7 @@ fetch("/api/v1/voice/status")
   .then(({ enabled }) => {
     if (!enabled) {
       listenButton.textContent = "Voice is disabled";
-      setStatus("Set EIVA_VOICE_ENABLED=true in .env and restart EIVA to enable voice.");
+      setStatus("Set VOICE_ENABLED=true in .env and restart EIVA to enable voice.");
       return;
     }
     listenButton.disabled = false;

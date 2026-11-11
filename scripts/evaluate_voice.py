@@ -179,6 +179,7 @@ async def main() -> None:
     script = (Path(__file__).resolve().parents[1] / "frontend" / "voice" / "voice.js").read_text(encoding="utf-8")
     assert 'id="listen"' in page and 'id="stop"' in page
     assert "getUserMedia" in script and "requestAnimationFrame" in script and "activeAudio.pause()" in script
+    assert "VOICE_ENABLED=true" in script and "EIVA_VOICE_ENABLED" not in script
     print("voice_runtime_disable_status_and_explicit_mic_controls=passed")
     print("audio_type_empty_and_size_validation=passed")
     print("shared_groq_router_transcription_and_wav_speech=passed")
