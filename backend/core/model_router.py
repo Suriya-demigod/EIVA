@@ -205,7 +205,9 @@ class ModelRouter:
                 input=text,
                 response_format="wav",
             )
-            audio_bytes = await response.aread()
+            # Groq's AsyncAPIResponse exposes async ``read()``; it does not
+            # implement ``aread()``. The wrong method raised after TTS succeeded.
+            audio_bytes = await response.read()
         except GroqError as exc:
             logger.warning(
                 "EIVA_AUDIO_CALL %s",

@@ -122,7 +122,12 @@ async function postJson(url, payload, signal) {
     body: JSON.stringify(payload),
     signal,
   });
-  if (!response.ok) throw new Error(`Request failed (${response.status}). Check that voice is enabled and try again.`);
+  if (!response.ok) {
+    const isSpeech = url.endsWith("/voice/speech");
+    throw new Error(isSpeech
+      ? `EIVA replied in text, but speech generation failed (${response.status}).`
+      : `Request failed (${response.status}). Check that voice is enabled and try again.`);
+  }
   return response;
 }
 
@@ -141,12 +146,13 @@ async function speak(text, signal) {
     const objectUrl = URL.createObjectURL(await response.blob());
     activeAudio = new Audio(objectUrl);
     try {
-      await activeAudio.play();
-      await new Promise((resolve, reject) => {
+      const finished = new Promise((resolve, reject) => {
         activeAudio.addEventListener("ended", resolve, { once: true });
         activeAudio.addEventListener("error", () => reject(new Error("Audio playback failed.")), { once: true });
         signal.addEventListener("abort", () => reject(new DOMException("Stopped", "AbortError")), { once: true });
       });
+      await activeAudio.play();
+      await finished;
     } finally {
       activeAudio = undefined;
       URL.revokeObjectURL(objectUrl);
@@ -181,8 +187,13 @@ async function submitRecording(blob) {
     const answer = result.message.content;
     answerText.textContent = answer;
     answerText.classList.remove("muted");
-    setStatus("Speaking. Select Stop / cancel to interrupt playback.");
-    await speak(answer, signal);
+    setStatus("Speaking EIVA’s response. Select Stop / cancel to interrupt playback.");
+    try {
+      await speak(answer, signal);
+    } catch (error) {
+      if (error.name === "AbortError") throw error;
+      throw new Error(`EIVA replied in text, but could not speak the response: ${error.message}`);
+    }
     setStatus("Finished. Select Start speaking when you’re ready.");
   } catch (error) {
     if (error.name === "AbortError") setStatus("Voice turn stopped.");

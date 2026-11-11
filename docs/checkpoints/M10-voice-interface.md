@@ -23,6 +23,10 @@ Microphone capture, pause detection, speech-to-text, conversation handoff, text-
 - `docs/IMPLEMENTATION_PLAN.md` — M10 delivered scope and limitations
 - `docs/checkpoints/M10-voice-interface.md` — completion record and evaluation
 - `milestone.md` — dashboard progress and next milestone
+- `backend/core/model_router.py` — TTS follow-up uses the Groq async binary response's supported `read()` method
+- `frontend/voice/voice.js` — explains TTS-only failures and waits for audio playback completion safely
+- `frontend/voice/index.html` — refreshes the browser script after the TTS fix
+- `scripts/evaluate_voice.py` — guards against regression to the unsupported response method and checks playback/error messaging
 
 ## Evaluation
 
@@ -32,6 +36,13 @@ Evaluation completed with local fake Groq responses:
 - `python -m scripts.evaluate_voice` — passed: runtime disable/status, explicit mic UI controls, content-type/empty/size checks, shared-router transcription and WAV speech, and transcript-to-chat flow
 - `python -m unittest tests.test_voice_pipeline` — 1 test passed
 - `node --check` on `frontend/voice.js` via stdin — passed
+
+## TTS playback regression follow-up
+
+- Root cause: Groq's `AsyncAPIResponse` supports `await response.read()`, not `await response.aread()`. Chat and transcription had already succeeded, but the unsupported method raised `AttributeError` while EIVA was downloading the generated speech audio.
+- Fixed the shared Groq router to read the WAV response through its async `read()` method. The voice page now reports a speech-specific failure while preserving the already-rendered text answer, and installs playback listeners before starting audio.
+- Live verification: the voice API returned HTTP 200 with `audio/wav`, a `RIFF` header, and 122,950 bytes for a short synthetic sentence. The running API reports voice enabled. The browser mic was not activated as part of this check.
+- Regression evaluation now verifies the async response method, frontend playback call, speech-specific error message, and cache-busted voice asset.
 
 The test suite does not request a physical microphone or speaker. Browser/device permission and actual playback still need a manual check on the target computer. No live Groq requests were made.
 

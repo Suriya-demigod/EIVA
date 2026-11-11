@@ -47,7 +47,7 @@ class FakeTranscriptions:
 
 
 class FakeBinaryResponse:
-    async def aread(self) -> bytes:
+    async def read(self) -> bytes:
         return b"RIFF-audio-data"
 
 
@@ -170,6 +170,7 @@ async def evaluate_shared_router() -> None:
         "input": "Hello there",
         "response_format": "wav",
     }
+    assert not hasattr(FakeBinaryResponse(), "aread")
 
 
 async def main() -> None:
@@ -177,8 +178,10 @@ async def main() -> None:
     await evaluate_routes()
     page = (Path(__file__).resolve().parents[1] / "frontend" / "voice" / "index.html").read_text(encoding="utf-8")
     script = (Path(__file__).resolve().parents[1] / "frontend" / "voice" / "voice.js").read_text(encoding="utf-8")
-    assert 'id="listen"' in page and 'id="stop"' in page and "voice.js?v=" in page
+    assert 'id="listen"' in page and 'id="stop"' in page and "voice.js?v=tts-async-response-fix-1" in page
     assert "getUserMedia" in script and "requestAnimationFrame" in script and "activeAudio.pause()" in script
+    assert "activeAudio.play()" in script
+    assert "EIVA replied in text, but speech generation failed" in script
     assert "VOICE_ENABLED=true" in script and "EIVA_VOICE_ENABLED" not in script
     print("voice_runtime_disable_status_and_explicit_mic_controls=passed")
     print("audio_type_empty_and_size_validation=passed")
