@@ -1,2 +1,0 @@
-# Add only trusted A2A peers here. Tokens remain in .env, named by token_env.
-peers: {}

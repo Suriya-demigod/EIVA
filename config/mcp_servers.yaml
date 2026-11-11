@@ -1,3 +1,0 @@
-# Add locally installed MCP server commands here. Servers start only on the first
-# authorized call; empty configuration keeps integrations safely unavailable.
-servers: {}
