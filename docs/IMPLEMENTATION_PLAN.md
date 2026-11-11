@@ -141,6 +141,8 @@ Track current status and per-milestone file changes in the [milestone dashboard]
 
 **Complete when:** A clean environment can follow the documented steps to configure, start, use, and update EIVA without relying on undocumented local state.
 
+**Current state:** Complete for the documented Windows local-development deployment. A PowerShell setup script creates `.venv` and installs the declared Python dependencies; configuration and operations guides cover settings, start/upgrade, migrations, and SQLite backup/restore. A release-check script runs the local regression and module evaluations. Startup and health were exercised locally. This is not a production or multi-user deployment profile; dependency vulnerability scanning remains conditional on installing `pip-audit`.
+
 ## How we will evaluate EIVA
 
 1. **Model screening:** Compare candidate Groq models on the same planning, coding, review, tool-selection, and response-quality cases. Record outputs, pass criteria, latency, and usage. Review failures manually before changing role mappings.

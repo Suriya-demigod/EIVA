@@ -43,7 +43,7 @@ The test suite does not request a physical microphone or speaker. Browser/device
 
 ## Runtime notes
 
-- Voice is disabled by default. Set `EIVA_VOICE_ENABLED=true` in the private `.env` to enable it.
+- Historical note: the original setup line used `EIVA_VOICE_ENABLED`; the implemented setting is `VOICE_ENABLED=true`. See [the current configuration reference](../CONFIGURATION.md).
 - The browser detects a speech pause and caps a recording session at 18 seconds; the API separately enforces audio types and a configurable size limit.
 - Groq Whisper processes the uploaded recording and Orpheus generates WAV output. The page splits longer answers into requests of at most 200 characters.
 - Audio and transcript contents are not written to SQLite or application logs. Groq receives the audio/transcript needed for voice operation; provider usage charges apply.

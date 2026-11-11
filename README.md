@@ -4,21 +4,43 @@ See [milestone.md](milestone.md) for the visual build dashboard, current progres
 
 See [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) for the full implementation roadmap.
 
+## Quick start (Windows / PowerShell)
+
+Requirements: Python 3.11 or newer, Git, and a Groq API key. Node.js is optional and only used for the frontend stream test; the application has no JavaScript build step.
+
+```powershell
+git clone https://github.com/Suriya-demigod/EIVA.git
+Set-Location EIVA
+powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
+if (-not (Test-Path .env)) { New-Item -ItemType File -Path .env | Out-Null }
+notepad .env
+```
+
+In the private `.env` file, add `GROQ_API_KEY=<your Groq API key>` and save it. Do not commit or share `.env`. Start EIVA:
+
+```powershell
+& '.\.venv\Scripts\python.exe' -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
+```
+
+Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) and check [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health). The app creates the SQLite database and applies migrations at startup. The first RAG indexing/search can download the embedding model locally. For all settings and operational steps, see [Configuration](docs/CONFIGURATION.md) and [Operations](docs/OPERATIONS.md).
+
+To run local release checks, use `powershell -ExecutionPolicy Bypass -File .\scripts\release_check.ps1`.
+
 ## Web application
 
 Run EIVA with `uvicorn backend.main:app --reload` and open `http://127.0.0.1:8000/`. The workspace includes streaming chat, task progress and cancellation, task-scoped approval prompts, agent status, local knowledge search and citations, explicit memory controls, image analysis, and runtime settings. The standalone voice studio remains available at `/voice-ui/`.
 
-The web app is served directly by FastAPI and uses native browser modules; it has no separate JavaScript build or package dependencies. Voice stays off unless `EIVA_VOICE_ENABLED=true` is set. Consequential tool calls pause in the local approval queue and only continue after an explicit decision. Pending approvals are in memory and are cancelled when the app shuts down.
+The web app is served directly by FastAPI and uses native browser modules; it has no separate JavaScript build or package dependencies. Voice stays off unless `VOICE_ENABLED=true` is set. Consequential tool calls pause in the local approval queue and only continue after an explicit decision. Pending approvals are in memory and are cancelled when the app shuts down.
 
 ## Agent-to-agent communication
 
-Internal agents can publish validated messages through their task-scoped `AgentContext`. External A2A support is disabled unless `EIVA_A2A_ENABLED=true` and a bearer token of at least 32 characters is set in `.env` as `EIVA_A2A_SERVER_TOKEN`. Set `EIVA_A2A_PUBLIC_URL` to the externally reachable HTTPS `/a2a/v1` endpoint before exposing the server.
+Internal agents can publish validated messages through their task-scoped `AgentContext`. External A2A support is disabled unless `A2A_ENABLED=true` and a bearer token of at least 32 characters is set in `.env` as `A2A_SERVER_TOKEN`. Set `A2A_PUBLIC_URL` to the externally reachable HTTPS `/a2a/v1` endpoint before exposing the server.
 
 The server publishes `/.well-known/agent-card.json`, accepts authenticated A2A 1.0 HTTP+JSON `POST /a2a/v1/message:send`, and exposes authenticated task status at `/a2a/v1/tasks/{task_id}`. A received text request starts a local research task. To contact a remote peer, add its Agent Card URL and an environment-variable name in `config/a2a_peers.yaml`, then call `POST /api/v1/agent-messages` with an existing `task_id`, the configured peer name, and the text to send. Peer credentials are resolved from the process environment or `.env`; credentials and message text are excluded from task trace events.
 
 The initial A2A slice supports bounded text messages, bearer authentication, and task polling. Streaming, push notifications, attachments, and follow-up messages are not implemented. Peer endpoints must use HTTPS and share the configured Agent Card's origin; HTTP is accepted only for loopback development. See the [A2A Protocol Specification](https://github.com/a2aproject/A2A/blob/main/docs/specification.md).
 
-Conversation history, tasks, workflow checkpoints, and explicitly saved memories use a local SQLite database at `data/eiva.sqlite3` by default. Migrations run at application startup; they can also be applied with `python -m scripts.migrate_db`. Database files are excluded from Git.
+Conversation history, tasks, workflow checkpoints, and explicitly saved memories use a local SQLite database at `data/eiva.sqlite3` by default. Migrations run at application startup; they can also be applied with `& '.\.venv\Scripts\python.exe' -m scripts.migrate_db`. Database files are excluded from Git. See [Operations](docs/OPERATIONS.md) for backup and restore steps.
 
 ## Local knowledge base
 
@@ -35,7 +57,7 @@ Retrieval combines a local `sqlite-vec` dense-vector search with SQLite FTS5 key
 
 ## Voice interface
 
-The optional voice page is available at `/voice-ui/`. Voice is disabled by default; set `EIVA_VOICE_ENABLED=true` in your private `.env` and restart the API. The page requests microphone access only after the user selects **Start speaking**, detects a pause to submit the recording, and provides a **Stop / cancel** control for recording and playback.
+The optional voice page is available at `/voice-ui/`. Voice is disabled by default; set `VOICE_ENABLED=true` in your private `.env` and restart the API. The page requests microphone access only after the user selects **Start speaking**, detects a pause to submit the recording, and provides a **Stop / cancel** control for recording and playback.
 
 Audio transcription and speech use Groq's audio endpoints through the same `AsyncGroq` client owned by EIVA's model router. The page sends the recording to Groq for transcription, submits the resulting text through the existing chat route, then requests WAV speech for the response. Audio and transcript content are not written to the EIVA database or logs. Use the voice controls only when you are comfortable sending the recording and spoken response text to Groq; provider account usage and charges apply.
 
