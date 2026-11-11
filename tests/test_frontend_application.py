@@ -22,11 +22,20 @@ class FrontendApplicationTests(unittest.TestCase):
         root = self.client.get("/")
         self.assertEqual(root.status_code, 200)
         self.assertIn("EIVA — Personal assistant", root.text)
+        self.assertIn("app.js?v=", root.text)
         self.assertEqual(self.client.get("/app.js").status_code, 200)
+        app_source = self.client.get("/app.js").text
+        self.assertIn("VOICE_ENABLED=true", app_source)
+        self.assertNotIn("EIVA_VOICE_ENABLED", app_source)
+        self.assertIn("API connected", app_source)
+        self.assertIn("Groq connectivity is checked when you send a request", app_source)
+        self.assertIn("On request", app_source)
+        self.assertNotIn("Groq model router <span style=\"margin-left:auto;color:#6f8190\">Ready</span>", app_source)
         self.assertEqual(self.client.get("/styles.css").status_code, 200)
         voice = self.client.get("/voice-ui/")
         self.assertEqual(voice.status_code, 200)
         self.assertIn("Talk to EIVA", voice.text)
+        self.assertIn("voice.js?v=", voice.text)
         self.assertEqual(self.client.get("/voice-ui/voice.js").status_code, 200)
 
     def test_approval_decision_updates_task_event_and_queue(self) -> None:

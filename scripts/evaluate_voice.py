@@ -177,7 +177,7 @@ async def main() -> None:
     await evaluate_routes()
     page = (Path(__file__).resolve().parents[1] / "frontend" / "voice" / "index.html").read_text(encoding="utf-8")
     script = (Path(__file__).resolve().parents[1] / "frontend" / "voice" / "voice.js").read_text(encoding="utf-8")
-    assert 'id="listen"' in page and 'id="stop"' in page
+    assert 'id="listen"' in page and 'id="stop"' in page and "voice.js?v=" in page
     assert "getUserMedia" in script and "requestAnimationFrame" in script and "activeAudio.pause()" in script
     assert "VOICE_ENABLED=true" in script and "EIVA_VOICE_ENABLED" not in script
     print("voice_runtime_disable_status_and_explicit_mic_controls=passed")

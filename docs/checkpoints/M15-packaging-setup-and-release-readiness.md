@@ -13,7 +13,11 @@ Setup scripts, local run commands, optional container configuration, configurati
 - `docs/OPERATIONS.md` — start, upgrade, migration, SQLite backup/restore, release checks, and deployment limits
 - `docs/checkpoints/M10-voice-interface.md` — historical variable-name correction linking to the current configuration reference
 - `frontend/voice/voice.js` — voice-disabled guidance corrected to the actual `VOICE_ENABLED` setting
+- `frontend/voice/index.html` — voice script cache-busted so the correction reaches existing browser tabs
+- `frontend/app/app.js` — corrected the Settings variable name and clarified local API vs. per-request Groq connectivity
+- `frontend/app/index.html` — cache-busted the updated workspace module
 - `scripts/evaluate_voice.py` — regression assertion for the voice setting name
+- `tests/test_frontend_application.py` — frontend asset, setting-name, and provider-status regression checks
 - `scripts/setup.ps1` — Python/virtual-environment setup and dependency installation
 - `scripts/release_check.ps1` — repeatable local release gate
 - `scripts/backup_database.py` — consistent SQLite online backup with integrity validation
@@ -29,6 +33,9 @@ Setup scripts, local run commands, optional container configuration, configurati
 |---|---|
 | `scripts/setup.ps1` | ✅ Created/validated the workspace venv and installed dependencies; all declared requirements were already satisfied in this environment |
 | `scripts/release_check.ps1` | ✅ 19 Python tests, tool/orchestration/runtime/persistence/RAG/voice evaluations, compilation, dependency consistency, and 2 Node frontend tests passed |
+| Computer-use browser walkthrough | ✅ Overview, Chat, Tasks, Knowledge, Memory, Vision, Settings, and Voice pages rendered; no browser console errors |
+| Read-only API smoke checks | ✅ Health, agents (4), tasks (0), approvals (0), memories (0), knowledge sources (0), and voice status responded; A2A card returned expected 404 while disabled |
+| Chat UI smoke request | ⚠️ Form and streaming UI handled failure; provider returned the generic error shown in the user's screenshot |
 | `tests/test_database_backup.py` | ✅ 2 tests passed, including a WAL-backed consistent snapshot, integrity validation, and refusal to overwrite an existing backup |
 | Local startup on `127.0.0.1:18765` | ✅ FastAPI startup completed; `/health` returned `ok`; frontend `/` returned HTTP 200 |
 | `git diff --check` | ✅ Passed |
@@ -39,6 +46,8 @@ The setup command and complete release script were run. Dependencies were alread
 
 - The voice page's disabled-state hint had retained the incorrect `EIVA_VOICE_ENABLED` name. It now directs users to `VOICE_ENABLED=true`, and the voice evaluation checks that the displayed setting matches the backend.
 - One minimal request through the existing Groq model router failed as `APIConnectionError` (no HTTP status). DNS resolved `api.groq.com`, but the local HTTPS connectivity probe to port 443 failed. This points to blocked/unavailable outbound network connectivity; the API key was not printed or inspected. Restore outbound HTTPS access to `api.groq.com` and retry chat. Voice remains disabled until `VOICE_ENABLED=true` is added to `.env` and the application is restarted.
+- The local UI also reports `API connected` separately from Groq availability; Settings now says Groq is checked when a request is sent instead of incorrectly showing the model router as ready. The overview confirms the local service is running.
+- The browser test used synthetic text only. No memory, document, task, image, or file changes were made. Empty task, memory, and knowledge lists are the current workspace state, not failing routes.
 
 ## Completion checks
 
