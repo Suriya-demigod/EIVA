@@ -4,7 +4,7 @@
 
 | Project status | Next milestone | Model provider | Integrations in scope |
 |---|---|---|---|
-| ✅ M00–M11 complete | **M12 — Waiting for user instruction** | Groq only | Filesystem · GitHub · Playwright |
+| ✅ M00–M12 complete | **M13 — Waiting for user instruction** | Groq only | Filesystem · GitHub · Playwright |
 
 CST and antenna-project integrations are out of scope.
 
@@ -36,14 +36,14 @@ flowchart LR
     M02 --> M03[M03 Context] --> M04[M04 Agent Base] --> M05[M05 Skills and Agents]
     M05 --> M06[M06 Permissions and Tools] --> M07[M07 Orchestration]
     M07 --> M08[M08 Memory] --> M09[M09 RAG] --> M10[M10 Voice]
-    M10 --> M11[M11 Vision and Control] --> M12[M12 Frontend]
-    M12 --> M13[M13 Agent Communication] --> M14[M14 Hardening] --> M15[M15 Release]
+    M10 --> M11[M11 Vision and Control] --> M12[M12 Frontend] --> M13[M13 Agent Communication]
+    M13 --> M14[M14 Hardening] --> M15[M15 Release]
     classDef done fill:#d9f5e5,stroke:#27804b,color:#123a23,stroke-width:2px;
     classDef waiting fill:#fff1c2,stroke:#c68a00,color:#382600,stroke-width:2px;
     classDef queued fill:#eef2f7,stroke:#8793a1,color:#1e293b;
-    class M00,M01,M02,M03,M04,M05,M06,M07,M08,M09,M10,M11 done;
-    class M12 waiting;
-    class M13,M14,M15 queued;
+    class M00,M01,M02,M03,M04,M05,M06,M07,M08,M09,M10,M11,M12 done;
+    class M13 waiting;
+    class M14,M15 queued;
 ```
 
 ## Milestones and file-change records
@@ -64,8 +64,8 @@ Each checkpoint records the exact files changed for that milestone. File lists a
 | 09 | Document and code RAG | ✅ Complete | [M09](docs/checkpoints/M09-document-and-code-rag.md) |
 | 10 | Voice interface | ✅ Complete | [M10](docs/checkpoints/M10-voice-interface.md) |
 | 11 | Vision and desktop/browser control | ✅ Complete | [M11](docs/checkpoints/M11-vision-and-desktop-browser-control.md) |
-| 12 | Frontend application | ⏸ Waiting for user instruction | [M12](docs/checkpoints/M12-frontend-application.md) |
-| 13 | External agent communication | ⬜ Queued | [M13](docs/checkpoints/M13-external-agent-communication.md) |
+| 12 | Frontend application | ✅ Complete | [M12](docs/checkpoints/M12-frontend-application.md) |
+| 13 | External agent communication | ⏸ Waiting for user instruction | [M13](docs/checkpoints/M13-external-agent-communication.md) |
 | 14 | Observability, evaluation, and security hardening | ⬜ Queued | [M14](docs/checkpoints/M14-observability-evaluation-and-security-hardening.md) |
 | 15 | Packaging, setup, and release readiness | ⬜ Queued | [M15](docs/checkpoints/M15-packaging-setup-and-release-readiness.md) |
 

@@ -57,6 +57,7 @@ class PermissionManager:
         tool_name: str,
         *,
         approval_verified: bool = False,
+        check_approval: bool = True,
         path: str | None = None,
         task_id: UUID | None = None,
         request_id: UUID | None = None,
@@ -65,7 +66,7 @@ class PermissionManager:
         if policy is None or not policy.enabled:
             self.record(tool_name, "denied", "tool_disabled_or_unconfigured", task_id, request_id)
             raise PermissionDenied(f"Tool '{tool_name}' is disabled or unconfigured")
-        if policy.requires_approval and not approval_verified:
+        if check_approval and policy.requires_approval and not approval_verified:
             self.record(tool_name, "denied", "approval_required", task_id, request_id)
             raise PermissionDenied(f"Tool '{tool_name}' requires verified approval")
         if path is not None:

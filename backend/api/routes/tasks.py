@@ -35,6 +35,8 @@ def _summary(record: TaskRecord) -> TaskSummary:
         description=record.description,
         workflow=record.workflow,
         progress_percent=record.progress_percent,
+        error=record.error,
+        created_at=record.created_at,
     )
 
 
@@ -43,8 +45,6 @@ def _detail(record: TaskRecord) -> TaskDetailResponse:
         **_summary(record).model_dump(),
         request_id=record.request_id,
         result=record.result,
-        error=record.error,
-        created_at=record.created_at,
         started_at=record.started_at,
         completed_at=record.completed_at,
     )

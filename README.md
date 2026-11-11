@@ -4,6 +4,12 @@ See [milestone.md](milestone.md) for the visual build dashboard, current progres
 
 See [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) for the full implementation roadmap.
 
+## Web application
+
+Run EIVA with `uvicorn backend.main:app --reload` and open `http://127.0.0.1:8000/`. The workspace includes streaming chat, task progress and cancellation, task-scoped approval prompts, agent status, local knowledge search and citations, explicit memory controls, image analysis, and runtime settings. The standalone voice studio remains available at `/voice-ui/`.
+
+The web app is served directly by FastAPI and uses native browser modules; it has no separate JavaScript build or package dependencies. Voice stays off unless `EIVA_VOICE_ENABLED=true` is set. Consequential tool calls pause in the local approval queue and only continue after an explicit decision. Pending approvals are in memory and are cancelled when the app shuts down.
+
 Conversation history, tasks, workflow checkpoints, and explicitly saved memories use a local SQLite database at `data/eiva.sqlite3` by default. Migrations run at application startup; they can also be applied with `python -m scripts.migrate_db`. Database files are excluded from Git.
 
 ## Local knowledge base
@@ -33,4 +39,4 @@ Voice models and the default English voice are configured under `audio` in `conf
 
 `POST /api/v1/vision/screen` accepts `{"task_id":"...","question":"..."}`. It captures the current browser page through the task-scoped Playwright MCP connection, sends the screenshot to the vision model, and records start/completion events in that task's event stream. Screenshot bytes are removed from persisted task results.
 
-The Playwright gateway exposes tab listing/selection, page screenshots, navigation, click, text entry, and key presses ([Playwright MCP reference](https://github.com/microsoft/playwright-mcp)). Every browser tool call requires a task ID. Read actions can run when their permission is enabled. Navigation, tab changes, clicks, typing, and key presses require verified approval; the app currently has no approval UI/checker, so these actions remain denied by default. Configure a local Playwright MCP command in `config/mcp_servers.yaml` to enable browser access. This milestone controls browser pages and tabs, not native Windows application windows or arbitrary screen coordinates. Vision analysis sends the supplied image or browser screenshot to Groq.
+The Playwright gateway exposes tab listing/selection, page screenshots, navigation, click, text entry, and key presses ([Playwright MCP reference](https://github.com/microsoft/playwright-mcp)). Every browser tool call requires a task ID. Read actions can run when their permission is enabled. Navigation, tab changes, clicks, typing, and key presses pause for a decision in the workspace approval queue. Configure a local Playwright MCP command in `config/mcp_servers.yaml` to enable browser access. This milestone controls browser pages and tabs, not native Windows application windows or arbitrary screen coordinates. Vision analysis sends the supplied image or browser screenshot to Groq.

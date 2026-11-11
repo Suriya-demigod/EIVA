@@ -22,6 +22,7 @@ from backend.orchestration.events import TaskEventBus
 from backend.orchestration.supervisor import WorkflowSupervisor
 from backend.tasks.manager import TaskManager
 from backend.tools.gateway import ToolGateway
+from backend.tools.approvals import ApprovalManager
 
 
 @asynccontextmanager
@@ -35,12 +36,15 @@ async def app_lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.database = database
     task_repository = TaskRepository(database)
     app.state.task_repository = task_repository
+    app.state.event_bus = TaskEventBus(persist_event=task_repository.save_event)
+    app.state.approval_manager = ApprovalManager()
     app.state.tool_gateway = ToolGateway.from_files(
         bindings_path=Path(settings.tool_bindings_config_path),
         servers_path=Path(settings.mcp_servers_config_path),
         permissions_path=Path(settings.permissions_config_path),
+        approval_manager=app.state.approval_manager,
+        task_event_sink=app.state.event_bus.publish,
     )
-    app.state.event_bus = TaskEventBus(persist_event=task_repository.save_event)
     app.state.task_manager = TaskManager(app.state.event_bus, repository=task_repository)
     app.state.short_term_memory = ShortTermMemory(
         max_conversations=settings.context_max_conversations,
@@ -78,5 +82,6 @@ async def app_lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
     finally:
         await app.state.task_manager.shutdown()
+        app.state.approval_manager.cancel_all()
         await app.state.tool_gateway.close()
         await close_model_router()

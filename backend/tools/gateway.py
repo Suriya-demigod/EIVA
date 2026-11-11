@@ -5,6 +5,7 @@ import inspect
 import os
 from pathlib import Path
 from typing import Any, Awaitable, Callable
+from urllib.parse import urlsplit
 from uuid import UUID
 
 import yaml
@@ -13,6 +14,7 @@ from pydantic import ValidationError
 
 from backend.core.permission_manager import PermissionDenied, PermissionManager
 from backend.mcp.client import MCPStdioClient, MCPUnavailableError
+from backend.tools.approvals import ApprovalManager, ApprovalStatus
 from backend.tools.schemas import (
     FilesystemListDirectory,
     FilesystemReadFile,
@@ -87,11 +89,15 @@ class ToolGateway:
         servers: dict[str, MCPServerSpec],
         permissions: PermissionManager,
         approval_checker: APPROVAL_CHECKER | None = None,
+        approval_manager: ApprovalManager | None = None,
+        task_event_sink: Callable[[UUID, str, dict[str, Any]], Any] | None = None,
     ) -> None:
         self._bindings = bindings
         self._servers = servers
         self._permissions = permissions
         self._approval_checker = approval_checker
+        self._approval_manager = approval_manager
+        self._task_event_sink = task_event_sink
         self._clients: dict[str, MCPStdioClient] = {}
 
     @classmethod
@@ -101,6 +107,8 @@ class ToolGateway:
         servers_path: Path,
         permissions_path: Path,
         approval_checker: APPROVAL_CHECKER | None = None,
+        approval_manager: ApprovalManager | None = None,
+        task_event_sink: Callable[[UUID, str, dict[str, Any]], Any] | None = None,
     ) -> "ToolGateway":
         binding_data: Any = yaml.safe_load(bindings_path.read_text(encoding="utf-8")) or {}
         server_data: Any = yaml.safe_load(servers_path.read_text(encoding="utf-8")) or {}
@@ -109,7 +117,14 @@ class ToolGateway:
         for name, binding in bindings.items():
             if binding.input_model not in INPUT_MODELS:
                 raise ValueError(f"Tool '{name}' uses unknown input model '{binding.input_model}'")
-        return cls(bindings, servers, PermissionManager.from_yaml(permissions_path), approval_checker)
+        return cls(
+            bindings,
+            servers,
+            PermissionManager.from_yaml(permissions_path),
+            approval_checker,
+            approval_manager,
+            task_event_sink,
+        )
 
     async def _is_approved(
         self,
@@ -147,25 +162,50 @@ class ToolGateway:
         try:
             model = INPUT_MODELS[binding.input_model]
             validated = model.model_validate(arguments)
-            policy = self._permissions.policy_for(tool_name)
             path = getattr(validated, "path", None) if binding.server == "filesystem" else None
-            approval_ok = (
-                await self._is_approved(approval_id, tool_name, task_id, request_id)
-                if policy and policy.requires_approval
-                else False
-            )
-            self._permissions.authorize(
+            policy = self._permissions.authorize(
                 tool_name,
-                approval_verified=approval_ok,
+                check_approval=False,
                 path=path,
                 task_id=task_id,
                 request_id=request_id,
             )
-            if policy is None:
-                raise PermissionDenied(f"Tool '{tool_name}' is disabled or unconfigured")
             server = self._servers.get(binding.server)
             if server is None:
                 raise MCPUnavailableError(f"MCP server '{binding.server}' is not configured")
+            if policy.requires_approval:
+                if approval_id is not None:
+                    approval_ok = await self._is_approved(approval_id, tool_name, task_id, request_id)
+                elif self._approval_manager is not None and task_id is not None and request_id is not None:
+                    approval = self._approval_manager.request(
+                        tool_name, task_id, request_id, _approval_summary(tool_name, validated)
+                    )
+                    if self._task_event_sink is not None:
+                        self._task_event_sink(
+                            task_id,
+                            "approval.requested",
+                            approval.model_dump(mode="json"),
+                        )
+                    try:
+                        decision = await self._approval_manager.wait(approval.id)
+                    except asyncio.CancelledError:
+                        self._approval_manager.cancel_task(task_id)
+                        if self._task_event_sink is not None:
+                            self._task_event_sink(task_id, "approval.cancelled", {"approval_id": str(approval.id)})
+                        raise
+                    approval_ok = decision.status == ApprovalStatus.approved
+                    if not approval_ok:
+                        self._permissions.record(tool_name, "denied", "approval_declined", task_id, request_id)
+                        raise PermissionDenied(f"Approval was declined for '{tool_name}'")
+                else:
+                    approval_ok = False
+                self._permissions.authorize(
+                    tool_name,
+                    approval_verified=approval_ok,
+                    path=path,
+                    task_id=task_id,
+                    request_id=request_id,
+                )
             if binding.server == "playwright" and task_id is not None:
                 client_key = f"playwright:{task_id}"
             client = self._clients.get(client_key)
@@ -202,6 +242,8 @@ class ToolGateway:
 
     async def close_task(self, task_id: UUID) -> None:
         """Close browser MCP processes owned by one completed or cancelled task."""
+        if self._approval_manager is not None:
+            self._approval_manager.cancel_task(task_id)
         key = f"playwright:{task_id}"
         client = self._clients.pop(key, None)
         if client is not None:
@@ -211,3 +253,32 @@ class ToolGateway:
         clients, self._clients = list(self._clients.values()), {}
         for client in clients:
             await client.close()
+
+def _approval_summary(tool_name: str, arguments: BaseModel) -> str:
+    """Describe the impact without exposing file contents or typed page text."""
+    values = arguments.model_dump(exclude_none=True)
+    if tool_name == "filesystem.write_file":
+        return f"Write or replace the file at {values.get('path', 'the requested path')}? File contents are hidden."
+    if tool_name == "github.create_issue":
+        repository = "/".join(part for part in (values.get("owner"), values.get("repo")) if part)
+        title = values.get("title")
+        details = f" titled ‘{title}’" if title else ""
+        return f"Create a GitHub issue{details} in {repository or 'the requested repository'}? Issue body is hidden."
+    if tool_name.startswith("playwright."):
+        if tool_name == "playwright.navigate":
+            try:
+                target = urlsplit(values.get("url", ""))
+                location = f"{target.hostname or 'the requested host'}{target.path or '/'}"
+            except ValueError:
+                location = "the requested URL"
+            return f"Navigate the task's browser to {location}? URL query details are hidden."
+        if tool_name == "playwright.close_tab":
+            return "Close a browser tab in this task?"
+        if tool_name == "playwright.type_text":
+            return "Type text into the task's browser page? The text is hidden."
+        if tool_name == "playwright.press_key":
+            return f"Press a key in the task's browser page ({values.get('key', 'key hidden')})?"
+        if tool_name == "playwright.click":
+            return "Click an element in the task's browser page?"
+        return f"Allow the requested {tool_name.removeprefix('playwright.').replace('_', ' ')} browser action?"
+    return f"Allow the requested {tool_name} action to continue for this task?"

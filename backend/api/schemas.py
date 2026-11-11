@@ -62,6 +62,8 @@ class TaskSummary(APIModel):
     description: str
     workflow: Literal["research", "coding"]
     progress_percent: int = Field(ge=0, le=100)
+    error: str | None = None
+    created_at: datetime | None = None
 
 
 class ToolCallRequest(APIModel):
@@ -117,6 +119,23 @@ class MemoryListResponse(APIModel):
 
 class TaskListResponse(APIModel):
     items: list[TaskSummary]
+
+
+class ApprovalSummary(APIModel):
+    model_config = ConfigDict(extra="forbid", from_attributes=True)
+
+    id: UUID
+    task_id: UUID
+    request_id: UUID
+    tool_name: str
+    summary: str
+    status: Literal["pending", "approved", "denied", "cancelled"]
+    created_at: datetime
+    decided_at: datetime | None = None
+
+
+class ApprovalListResponse(APIModel):
+    items: list[ApprovalSummary]
 
 
 class KnowledgeIndexRequest(APIModel):

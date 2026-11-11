@@ -111,11 +111,13 @@ Track current status and per-milestone file changes in the [milestone dashboard]
 
 **Current state:** M11 adds bounded JPEG/PNG/WebP question answering through a configurable Groq vision role and task-scoped Playwright MCP controls for browser tabs, screenshots, navigation, clicks, typing, and keys. Browser actions pass through existing schema validation, per-tool permissions, approval hooks, and task audit events. Cancelling a task terminates its task-owned browser MCP process; screenshot image bytes are excluded from task result persistence. The default MCP server configuration remains empty, and the approval checker/UI is not yet wired, so modifying browser actions stay denied until configured. Native Windows application windows and coordinate-level desktop input are outside this Playwright slice; the UI milestone can expose these API controls later.
 
-### 12. Frontend application
+### 12. Frontend application — complete
 
 **Build:** Chat panel, Jarvis core/status view, voice waveform, agent monitor, vision panel, memory panel, task monitor, settings, API services, state management, and responsive styling.
 
 **Complete when:** The frontend supports chat and can show agent/task progress, errors, approvals, voice/vision status, and memory controls without relying on developer tools.
+
+**Current state:** Complete. FastAPI serves the native-module web app at `/` and retains the voice studio at `/voice-ui/`. The responsive workspace includes streamed chat, task creation/progress/cancellation, agent status, approval decisions, local knowledge indexing and cited answers, memory create/search/delete, supplied-image analysis, and runtime status. The approval manager is connected to the tool gateway and task event bus; approval summaries omit file contents and typed page text. Browser viewport checks and deterministic UI/API evaluations pass. Live Groq calls and a configured Playwright MCP server were not required for the evaluation.
 
 ### 13. External agent communication
 
