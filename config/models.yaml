@@ -11,5 +11,10 @@ audio:
   speech_model: canopylabs/orpheus-v1-english
   speech_voice: hannah
 
+# Optional rates in USD per million tokens. Leave unset to disable cost estimates.
+# Update from your provider contract before using estimates for budgeting.
+# Shape: model-name: {input_usd_per_million_tokens: value, output_usd_per_million_tokens: value}
+pricing_usd_per_million_tokens: {}
+
 # Provisional defaults only. Run `python scripts/evaluate_models.py` and
 # adjust the role assignments based on quality, latency, and account access.

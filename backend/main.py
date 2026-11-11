@@ -18,7 +18,7 @@ from backend.api.errors import (
 from backend.api.routes import a2a, agents, approvals, chat, knowledge, memories, tasks, vision, voice
 from backend.config import get_settings
 from backend.lifecycle import app_lifespan
-from backend.observability.logging import configure_logging
+from backend.observability.logging import configure_logging, request_id_var
 
 settings = get_settings()
 configure_logging()
@@ -42,9 +42,13 @@ app.mount("/voice-ui", StaticFiles(directory=str(_frontend_dir / "voice"), html=
 async def add_request_id(request: Request, call_next):
     request_id = uuid4()
     request.state.request_id = request_id
-    response = await call_next(request)
-    response.headers["X-Request-ID"] = str(request_id)
-    return response
+    token = request_id_var.set(str(request_id))
+    try:
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = str(request_id)
+        return response
+    finally:
+        request_id_var.reset(token)
 
 
 app.add_exception_handler(RequestValidationError, validation_error_handler)

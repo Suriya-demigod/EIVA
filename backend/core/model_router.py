@@ -18,10 +18,27 @@ logger = logging.getLogger("eiva.models")
 
 
 class ModelRouter:
-    def __init__(self, client: AsyncGroq, models: dict[str, str], audio: dict[str, str] | None = None) -> None:
+    def __init__(
+        self,
+        client: AsyncGroq,
+        models: dict[str, str],
+        audio: dict[str, str] | None = None,
+        pricing: dict[str, dict[str, float]] | None = None,
+    ) -> None:
         self._client = client
         self._models = models
         self._audio = audio or {}
+        self._pricing = pricing or {}
+
+    def estimate_cost(self, model: str, prompt_tokens: int | None, completion_tokens: int | None) -> float | None:
+        rates = self._pricing.get(model)
+        if rates is None or prompt_tokens is None or completion_tokens is None:
+            return None
+        input_rate = rates.get("input_usd_per_million_tokens")
+        output_rate = rates.get("output_usd_per_million_tokens")
+        if input_rate is None or output_rate is None:
+            return None
+        return round((prompt_tokens * input_rate + completion_tokens * output_rate) / 1_000_000, 8)
 
     def model_for(self, role: str) -> str:
         try:
@@ -64,22 +81,25 @@ class ModelRouter:
             raise
 
         usage = getattr(response, "usage", None)
+        prompt_tokens = getattr(usage, "prompt_tokens", None)
+        completion_tokens = getattr(usage, "completion_tokens", None)
+        event = {
+            "event": "stream_started" if is_stream else "completed",
+            "provider": "groq",
+            "role": role,
+            "model": model,
+            "request_id": str(request_id) if request_id else None,
+            "latency_ms": round((time.perf_counter() - started) * 1000),
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": getattr(usage, "total_tokens", None),
+        }
+        estimated_cost = self.estimate_cost(model, prompt_tokens, completion_tokens)
+        if estimated_cost is not None:
+            event["estimated_cost_usd"] = estimated_cost
         logger.info(
             "EIVA_MODEL_CALL %s",
-            json.dumps(
-                {
-                    "event": "stream_started" if is_stream else "completed",
-                    "provider": "groq",
-                    "role": role,
-                    "model": model,
-                    "request_id": str(request_id) if request_id else None,
-                    "latency_ms": round((time.perf_counter() - started) * 1000),
-                    "prompt_tokens": getattr(usage, "prompt_tokens", None),
-                    "completion_tokens": getattr(usage, "completion_tokens", None),
-                    "total_tokens": getattr(usage, "total_tokens", None),
-                },
-                sort_keys=True,
-            ),
+            json.dumps(event, sort_keys=True),
         )
         return response
 
@@ -219,7 +239,7 @@ def get_model_router() -> ModelRouter:
         timeout=settings.groq_timeout_seconds,
         max_retries=settings.groq_max_retries,
     )
-    return ModelRouter(client, models, config.get("audio", {}))
+    return ModelRouter(client, models, config.get("audio", {}), config.get("pricing_usd_per_million_tokens", {}))
 
 
 async def close_model_router() -> None:

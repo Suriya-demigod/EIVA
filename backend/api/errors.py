@@ -1,5 +1,6 @@
 """Consistent error mapping for API routes."""
 
+import logging
 from uuid import UUID
 
 from fastapi import Request
@@ -9,6 +10,9 @@ from groq import GroqError, RateLimitError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.api.schemas import ErrorResponse
+from backend.observability.logging import request_id_var
+
+logger = logging.getLogger("eiva.api.errors")
 
 
 def _request_id(request: Request) -> UUID:
@@ -63,7 +67,18 @@ async def groq_error_handler(request: Request, exc: GroqError) -> JSONResponse:
 async def unexpected_error_handler(request: Request, exc: Exception) -> JSONResponse:
     # Avoid putting exception text in logs or responses; SDK exceptions may
     # contain request metadata that should not be exposed.
+    request_id = _request_id(request)
+    token = request_id_var.set(str(request_id))
+    try:
+        logger.error(
+            "EIVA_UNEXPECTED_ERROR request_id=%s exception_type=%s",
+            request_id,
+            type(exc).__name__,
+        )
+    finally:
+        request_id_var.reset(token)
     return JSONResponse(
         status_code=500,
+        headers={"X-Request-ID": str(request_id)},
         content=_payload(request, "internal_error", "An unexpected server error occurred"),
     )

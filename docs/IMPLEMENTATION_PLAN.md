@@ -133,6 +133,8 @@ Track current status and per-milestone file changes in the [milestone dashboard]
 
 **Complete when:** A run can be traced end-to-end; model quality, latency, and cost are measurable; critical routes and workflows have automated coverage; sensitive values are absent from logs and reports; and failures produce actionable diagnostics.
 
+**Current state:** Complete. JSON logs include request correlation and redact bearer/API credentials. Unexpected errors produce safe type-only diagnostics and retain the request ID in both logs and response headers. The Groq router records latency and token usage and supports optional cost estimates configured from the provider contract; evaluation artifacts redact credential-shaped values. Regression and module evaluation passed across M00–M14. Token-based costs remain unset by default, no live model/API peers were contacted for this pass, and `pip-audit` was unavailable; see the M14 checkpoint for exact evidence and remaining release checks.
+
 ### 15. Packaging, setup, and release readiness
 
 **Build:** Setup scripts, local run commands, container configuration if needed, configuration reference, migration/backup guidance, and user-facing README.

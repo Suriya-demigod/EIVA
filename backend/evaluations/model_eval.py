@@ -15,7 +15,7 @@ import yaml
 
 from backend.config import get_settings
 from backend.core.model_router import ModelRouter
-from backend.observability.logging import configure_logging
+from backend.observability.logging import configure_logging, redact_sensitive_text
 
 
 def score_answer(answer: str, criteria: list[dict[str, str]]) -> dict[str, Any]:
@@ -41,8 +41,9 @@ async def evaluate_candidate(
     client: AsyncGroq,
     model: str,
     cases: list[dict[str, Any]],
+    pricing: dict[str, dict[str, float]] | None = None,
 ) -> dict[str, Any]:
-    router = ModelRouter(client, {"evaluation": model})
+    router = ModelRouter(client, {"evaluation": model}, pricing=pricing)
     case_results = []
     for case in cases:
         request_id = str(uuid4())
@@ -72,6 +73,11 @@ async def evaluate_candidate(
                     "completion_tokens": getattr(usage, "completion_tokens", None),
                     "total_tokens": getattr(usage, "total_tokens", None),
                 },
+                "estimated_cost_usd": router.estimate_cost(
+                    completion.model or model,
+                    getattr(usage, "prompt_tokens", None),
+                    getattr(usage, "completion_tokens", None),
+                ),
                 "quality": score_answer(answer, case["criteria"]),
             }
         )
@@ -81,6 +87,7 @@ async def evaluate_candidate(
     cases_passed = sum(result["quality"]["all_passed"] for result in case_results)
     latencies = [result["latency_ms"] for result in case_results if result["latency_ms"] is not None]
     total_tokens = sum(result["usage"]["total_tokens"] or 0 for result in case_results)
+    cost_values = [result["estimated_cost_usd"] for result in case_results]
     return {
         "summary": {
             "cases_passed": cases_passed,
@@ -90,6 +97,8 @@ async def evaluate_candidate(
             "criteria_score": round(criteria_passed / criteria_total, 3) if criteria_total else 0.0,
             "mean_latency_ms": round(sum(latencies) / len(latencies)) if latencies else None,
             "total_tokens": total_tokens,
+            "estimated_cost_usd": round(sum(value for value in cost_values if value is not None), 8)
+            if all(value is not None for value in cost_values) and cost_values else None,
         },
         "cases": case_results,
     }
@@ -125,7 +134,9 @@ async def run_evaluation(dataset_path: Path, output_path: Path) -> dict[str, Any
     try:
         for model in candidates:
             try:
-                report["models"][model] = await evaluate_candidate(client, model, dataset["cases"])
+                report["models"][model] = await evaluate_candidate(
+                    client, model, dataset["cases"], model_config.get("pricing_usd_per_million_tokens", {})
+                )
             except GroqError as exc:
                 report["models"][model] = {
                     "error": {
@@ -137,8 +148,20 @@ async def run_evaluation(dataset_path: Path, output_path: Path) -> dict[str, Any
         await client.close()
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
-    return report
+    safe_report = _redact_report(report)
+    output_path.write_text(json.dumps(safe_report, indent=2, ensure_ascii=False), encoding="utf-8")
+    return safe_report
+
+
+def _redact_report(value: Any) -> Any:
+    """Redact credential-shaped strings before writing local evaluation artifacts."""
+    if isinstance(value, str):
+        return redact_sensitive_text(value)
+    if isinstance(value, list):
+        return [_redact_report(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _redact_report(item) for key, item in value.items()}
+    return value
 
 
 async def main() -> None:

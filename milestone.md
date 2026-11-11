@@ -4,7 +4,7 @@
 
 | Project status | Next milestone | Model provider | Integrations in scope |
 |---|---|---|---|
-| ✅ M00–M13 complete | **M14 — Waiting for user instruction** | Groq only | Filesystem · GitHub · Playwright |
+| ✅ M00–M14 complete | **M15 — Waiting for user instruction** | Groq only | Filesystem · GitHub · Playwright |
 
 CST and antenna-project integrations are out of scope.
 
@@ -41,9 +41,8 @@ flowchart LR
     classDef done fill:#d9f5e5,stroke:#27804b,color:#123a23,stroke-width:2px;
     classDef waiting fill:#fff1c2,stroke:#c68a00,color:#382600,stroke-width:2px;
     classDef queued fill:#eef2f7,stroke:#8793a1,color:#1e293b;
-    class M00,M01,M02,M03,M04,M05,M06,M07,M08,M09,M10,M11,M12,M13 done;
-    class M14 waiting;
-    class M15 queued;
+    class M00,M01,M02,M03,M04,M05,M06,M07,M08,M09,M10,M11,M12,M13,M14 done;
+    class M15 waiting;
 ```
 
 ## Milestones and file-change records
@@ -66,8 +65,8 @@ Each checkpoint records the exact files changed for that milestone. File lists a
 | 11 | Vision and desktop/browser control | ✅ Complete | [M11](docs/checkpoints/M11-vision-and-desktop-browser-control.md) |
 | 12 | Frontend application | ✅ Complete | [M12](docs/checkpoints/M12-frontend-application.md) |
 | 13 | External agent communication | ✅ Complete | [M13](docs/checkpoints/M13-external-agent-communication.md) |
-| 14 | Observability, evaluation, and security hardening | ⏸ Waiting for user instruction | [M14](docs/checkpoints/M14-observability-evaluation-and-security-hardening.md) |
-| 15 | Packaging, setup, and release readiness | ⬜ Queued | [M15](docs/checkpoints/M15-packaging-setup-and-release-readiness.md) |
+| 14 | Observability, evaluation, and security hardening | ✅ Complete | [M14](docs/checkpoints/M14-observability-evaluation-and-security-hardening.md) |
+| 15 | Packaging, setup, and release readiness | ⏸ Waiting for user instruction | [M15](docs/checkpoints/M15-packaging-setup-and-release-readiness.md) |
 
 ### Work rhythm
 
