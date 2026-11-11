@@ -42,6 +42,13 @@ class WorkflowGraph:
     def __init__(self, steps: list[GraphStep]) -> None:
         if len(steps) < 1:
             raise ValueError("A workflow graph needs at least one step")
+        previous_end = -1
+        for step in steps:
+            if not 0 <= step.progress_start <= step.progress_end <= 99:
+                raise ValueError("Workflow step progress must be ordered between 0 and 99")
+            if step.progress_start < previous_end:
+                raise ValueError("Workflow step progress ranges must not overlap or move backward")
+            previous_end = step.progress_end
         self.steps = steps
 
     async def run(
@@ -91,7 +98,7 @@ class WorkflowGraph:
             )
 
             if index == 0 and tool_requests:
-                tasks.update_progress(task_id, step.progress_end + 5, "Running explicitly requested tools")
+                tasks.update_progress(task_id, min(99, step.progress_end + 5), "Running explicitly requested tools")
                 for tool_request in tool_requests:
                     events.publish(task_id, "tool.started", {"tool_name": tool_request.name})
                     try:

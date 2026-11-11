@@ -44,8 +44,10 @@ async def validation_error_handler(
 
 
 async def http_error_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
-    code = "context_window_exceeded" if exc.status_code == 413 else "http_error"
     message = str(exc.detail) if isinstance(exc.detail, str) else "Request failed"
+    code = "http_error"
+    if exc.status_code == 413:
+        code = "context_window_exceeded" if "context" in message.casefold() else "payload_too_large"
     return JSONResponse(
         status_code=exc.status_code,
         headers=exc.headers,

@@ -1,6 +1,8 @@
 """Supervisor for bounded research and coding workflows."""
 
 import asyncio
+import logging
+import traceback
 from typing import Any
 from uuid import UUID
 
@@ -14,6 +16,7 @@ from backend.tools.gateway import ToolGateway
 
 
 WORKFLOWS: dict[str, WorkflowGraph] = {"research": RESEARCH_GRAPH, "coding": CODING_GRAPH}
+logger = logging.getLogger("eiva.orchestration")
 
 
 class WorkflowSupervisor:
@@ -90,6 +93,16 @@ class WorkflowSupervisor:
                 self.tasks.transition(task_id, TaskStatus.cancelled, error="Task cancelled by the user")
             raise
         except Exception as exc:
+            logger.error(
+                "Workflow '%s' failed for task %s (%s); stack=%s",
+                workflow,
+                task_id,
+                type(exc).__name__,
+                " <- ".join(
+                    f"{frame.filename}:{frame.lineno} in {frame.name}"
+                    for frame in traceback.extract_tb(exc.__traceback__)
+                ),
+            )
             record = self.tasks.get(task_id)
             if record.status not in TERMINAL_STATUSES:
                 self.tasks.transition(

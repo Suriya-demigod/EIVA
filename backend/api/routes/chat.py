@@ -12,7 +12,7 @@ from groq import GroqError, RateLimitError
 from backend.api.schemas import ChatMessage, ChatRequest, ChatResponse
 from backend.config import get_settings
 from backend.core.context_builder import ContextBuilder, ContextWindowExceeded
-from backend.core.model_router import ModelRouter, get_model_router
+from backend.core.model_router import ModelRouter, completion_text, get_model_router
 from backend.memory.short_term import (
     ContextScope,
     ConversationCapacityExceeded,
@@ -200,7 +200,7 @@ async def chat(
             request_id=request_id,
             max_completion_tokens=settings.context_max_completion_tokens,
         )
-        content = completion.choices[0].message.content or ""
+        content = completion_text(completion)
         memory.append_exchange(scope, payload.message, content)
 
     return ChatResponse(

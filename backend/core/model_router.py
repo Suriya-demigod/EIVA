@@ -17,6 +17,16 @@ from backend.config import get_settings
 logger = logging.getLogger("eiva.models")
 
 
+def completion_text(response: Any, *, fallback: str = "") -> str:
+    """Return the first completion's text or fail clearly on malformed responses."""
+    choices = getattr(response, "choices", None)
+    if not choices:
+        raise ValueError("Model provider returned no choices")
+    message = getattr(choices[0], "message", None)
+    content = getattr(message, "content", None)
+    return content if isinstance(content, str) else fallback
+
+
 class ModelRouter:
     def __init__(
         self,
@@ -131,7 +141,7 @@ class ModelRouter:
             max_completion_tokens=1024,
             temperature=0.2,
         )
-        answer = completion.choices[0].message.content or ""
+        answer = completion_text(completion)
         return answer, completion.model or model
 
     async def transcribe(

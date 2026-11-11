@@ -18,6 +18,16 @@ Setup scripts, local run commands, optional container configuration, configurati
 - `frontend/app/index.html` — cache-busted the updated workspace module
 - `scripts/evaluate_voice.py` — regression assertion for the voice setting name
 - `tests/test_frontend_application.py` — frontend asset, setting-name, and provider-status regression checks
+- `backend/memory/retrieval.py` — normalize legacy naive timestamps during recency ranking
+- `backend/mcp/client.py` — restart crashed stdio server processes on subsequent tool calls
+- `backend/api/schemas.py` — allow legacy task records with no creation timestamp
+- `backend/core/model_router.py` — shared validation for empty model completion responses
+- `backend/agents/model_agent.py`, `backend/api/routes/chat.py`, `backend/api/routes/knowledge.py` — use validated completion text
+- `backend/api/errors.py` — distinguish context overflow from oversized upload errors
+- `backend/agents/registry.py` — add an injectable registry factory while preserving the FastAPI dependency signature
+- `backend/orchestration/graph.py` — validate progress ranges and cap tool progress
+- `backend/orchestration/supervisor.py` — record safe workflow failure stack locations
+- `tests/test_audit_regressions.py` — regression tests for verified audit findings
 - `scripts/setup.ps1` — Python/virtual-environment setup and dependency installation
 - `scripts/release_check.ps1` — repeatable local release gate
 - `scripts/backup_database.py` — consistent SQLite online backup with integrity validation
@@ -32,7 +42,7 @@ Setup scripts, local run commands, optional container configuration, configurati
 | Check | Result |
 |---|---|
 | `scripts/setup.ps1` | ✅ Created/validated the workspace venv and installed dependencies; all declared requirements were already satisfied in this environment |
-| `scripts/release_check.ps1` | ✅ 19 Python tests, tool/orchestration/runtime/persistence/RAG/voice evaluations, compilation, dependency consistency, and 2 Node frontend tests passed |
+| `scripts/release_check.ps1` | ✅ 27 Python tests, tool/orchestration/runtime/persistence/RAG/voice evaluations, compilation, dependency consistency, and 2 Node frontend tests passed |
 | Computer-use browser walkthrough | ✅ Overview, Chat, Tasks, Knowledge, Memory, Vision, Settings, and Voice pages rendered; no browser console errors |
 | Read-only API smoke checks | ✅ Health, agents (4), tasks (0), approvals (0), memories (0), knowledge sources (0), and voice status responded; A2A card returned expected 404 while disabled |
 | Chat UI smoke request | ⚠️ Form and streaming UI handled failure; provider returned the generic error shown in the user's screenshot |
@@ -48,6 +58,15 @@ The setup command and complete release script were run. Dependencies were alread
 - One minimal request through the existing Groq model router failed as `APIConnectionError` (no HTTP status). DNS resolved `api.groq.com`, but the local HTTPS connectivity probe to port 443 failed. This points to blocked/unavailable outbound network connectivity; the API key was not printed or inspected. Restore outbound HTTPS access to `api.groq.com` and retry chat. Voice remains disabled until `VOICE_ENABLED=true` is added to `.env` and the application is restarted.
 - The local UI also reports `API connected` separately from Groq availability; Settings now says Groq is checked when a request is sent instead of incorrectly showing the model router as ready. The overview confirms the local service is running.
 - The browser test used synthetic text only. No memory, document, task, image, or file changes were made. Empty task, memory, and knowledge lists are the current workspace state, not failing routes.
+
+## Audit report verification
+
+- ✅ The dashboard and implementation plan in this checkout both show M00–M15 complete; the reported milestone mismatch is already resolved here.
+- ✅ Fixed naive memory timestamps, dead MCP process restart, nullable legacy task timestamps, empty model choices, invalid workflow progress, oversized-payload error classification, standalone registry message-bus injection, and citations for only referenced sources.
+- ✅ Workflow failures now log stack locations and exception types without logging exception text, which can contain private provider details.
+- ✅ Added 8 regression tests; the full release check now passes 27 Python tests and 2 Node tests.
+- ℹ️ The migration `BEGIN IMMEDIATE` works because the current SQLite connection is not already in a transaction after schema DDL. FTS5 stores `chunk_id` as text by design, so the integer cast in keyword search is required for joins. Neither reported item required a code change.
+- ℹ️ Empty React scaffolding and generated `__pycache__` files were not part of runtime debugging and were left untouched.
 
 ## Completion checks
 

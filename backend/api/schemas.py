@@ -82,7 +82,7 @@ class TaskDetailResponse(TaskSummary):
     request_id: UUID
     result: dict[str, object] | None = None
     error: str | None = None
-    created_at: datetime
+    created_at: datetime | None = None
     started_at: datetime | None = None
     completed_at: datetime | None = None
 

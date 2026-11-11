@@ -70,6 +70,8 @@ class MCPStdioClient:
         return await self._exchange({"jsonrpc": "2.0", "id": request_id, "method": method, "params": params})
 
     async def _initialize(self) -> None:
+        if self._process is None or self._process.returncode is not None:
+            self._initialized = False
         if self._initialized:
             return
         await self._start()

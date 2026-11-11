@@ -3,7 +3,7 @@
 import json
 
 from backend.agents.base import AgentContext, AgentDefinition, AgentInput, AgentOutput, BaseAgent
-from backend.core.model_router import ModelRouter, get_model_router
+from backend.core.model_router import ModelRouter, completion_text, get_model_router
 from backend.skills.registry import SkillRegistry
 
 
@@ -32,7 +32,7 @@ class ModelAgent(BaseAgent):
             request_id=context.request_id,
         )
         context.raise_if_cancelled()
-        text = response.choices[0].message.content
+        text = completion_text(response)
         if not text or not text.strip():
             raise ValueError("Model returned an empty agent response")
         return AgentOutput(message=text.strip(), data={"model_role": self.definition.model_role, "skills": [s.name for s in self._skills]})

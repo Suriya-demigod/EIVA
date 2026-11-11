@@ -59,7 +59,12 @@ class AgentRegistry:
         self.message_bus = message_bus
 
     @classmethod
-    def from_yaml(cls, path: Path, skill_registry: SkillRegistry | None = None) -> "AgentRegistry":
+    def from_yaml(
+        cls,
+        path: Path,
+        skill_registry: SkillRegistry | None = None,
+        message_bus: AgentMessageBus | None = None,
+    ) -> "AgentRegistry":
         config: Any = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         definitions = [AgentDefinition.model_validate(item) for item in config.get("agents", [])]
         if not definitions:
@@ -67,7 +72,7 @@ class AgentRegistry:
         if skill_registry is not None:
             for definition in definitions:
                 skill_registry.get_many(definition.skills)
-        return cls(definitions)
+        return cls(definitions, message_bus=message_bus)
 
     def register(self, agent: BaseAgent) -> None:
         name = agent.definition.name
@@ -176,11 +181,10 @@ class AgentRegistry:
         return True
 
 
-@lru_cache
-def get_agent_registry() -> AgentRegistry:
+def create_agent_registry(message_bus: AgentMessageBus | None = None) -> AgentRegistry:
     settings = get_settings()
     skill_registry = SkillRegistry.from_directory(Path(settings.skills_config_dir))
-    registry = AgentRegistry.from_yaml(Path(settings.agents_config_path), skill_registry)
+    registry = AgentRegistry.from_yaml(Path(settings.agents_config_path), skill_registry, message_bus)
     agent_classes = {
         "researcher": ResearcherAgent,
         "developer": DeveloperAgent,
@@ -192,3 +196,9 @@ def get_agent_registry() -> AgentRegistry:
         if agent_class is not None:
             registry.register(agent_class(definition, skill_registry))
     return registry
+
+
+@lru_cache
+def get_agent_registry() -> AgentRegistry:
+    """FastAPI-compatible cached dependency; use the factory for explicit bus injection."""
+    return create_agent_registry()

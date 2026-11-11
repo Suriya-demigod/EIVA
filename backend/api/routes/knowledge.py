@@ -19,7 +19,7 @@ from backend.api.schemas import (
     KnowledgeSourceSummary,
 )
 from backend.config import get_settings
-from backend.core.model_router import ModelRouter, get_model_router
+from backend.core.model_router import ModelRouter, completion_text, get_model_router
 from backend.rag.embeddings import LocalEmbeddingError
 from backend.rag.models import RagChunk, RagDocument
 from backend.rag.service import RagError, RagService
@@ -146,8 +146,10 @@ async def answer_from_knowledge(
         request_id=request.state.request_id,
         max_completion_tokens=settings.context_max_completion_tokens,
     )
-    answer = completion.choices[0].message.content or "I couldn't produce an answer from the indexed sources."
+    answer = completion_text(completion, fallback="I couldn't produce an answer from the indexed sources.")
     allowed_labels = {citation.label for citation in citations}
     answer = re.sub(r"\[(S\d+)\]", lambda match: match.group(0) if match.group(1) in allowed_labels else "", answer)
     answer = re.sub(r"[ \t]{2,}", " ", answer).strip()
-    return KnowledgeAnswerResponse(answer=answer, model=completion.model, citations=citations)
+    cited_labels = set(re.findall(r"\[(S\d+)\]", answer))
+    cited = [citation for citation in citations if citation.label in cited_labels]
+    return KnowledgeAnswerResponse(answer=answer, model=completion.model, citations=cited)
